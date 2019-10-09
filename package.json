@@ -9,11 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.17.15",
-    "node-fetch": "^2.6.0",
     "bee-queue": "^1.2.2",
     "dotenv": "^6.2.0",
     "kafkajs": "^1.7.0",
+    "lodash": "^4.17.15",
+    "node-cron": "^2.0.3",
+    "node-fetch": "^2.6.0",
     "uuid": "^3.3.2"
   }
 }
