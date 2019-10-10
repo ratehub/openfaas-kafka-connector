@@ -67,8 +67,8 @@ class EventService {
      */
     subscribe(stream, subscriptionName, functions, processor){
         let subscription = new Subscription(stream, subscriptionName, functions, processor);
-        this.subscriptions.set(subscriptionName, subscription);
-        return this.subscriptions.get(subscriptionName);
+        this.subscriptions.set(stream, subscription);
+        return this.subscriptions.get(stream);
     }
 
     /**
@@ -131,6 +131,7 @@ class EventService {
                         if(!f.annotations.retryLatency){f.annotations.retryLatency = 1000 ;}
                         job.backoff(f.annotations.strategy, f.annotations.retryLatency);
                     }
+
                     if(f.annotations.delay) {
                         job.delayUntil(new Date(Date.now() + f.annotations.delay));
                     }

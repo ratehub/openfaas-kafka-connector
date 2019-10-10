@@ -28,30 +28,38 @@ const faas = `${protocol}://${process.env.FAAS_USER}:${process.env.FAAS_PASS}@${
         if(process.env.TOPICS) {
             let topics = process.env.TOPICS.split(",");
             for (let topic of topics) {
-                let f = _.filter(functions, ['annotations.topic', topic]);
-                if(f.length === 0){ continue; }
+                let f = filter(functions, topic);
                 eventService.subscribe(topic,
                     `${process.env.CONNECTOR_NAME}-${topic}`, f, async (payload, done) => {
-                        let r = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                        let res = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                             method: 'post',
                             body: JSON.stringify(payload.data),
                             headers: {'Content-Type': 'application/json'},
                         });
-                        console.log(await r.json());
-                    });
+                        if(res.ok) {
+                            console.log(await res.json());
+                           console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+                        }
+                        else{
+                            throw Error(JSON.stringify(await res.json()));
+                        }
+                });
             }
 
             await eventService.start();
-            cron.schedule("* * * * *", async function() {
+            console.log(`listening to topics: ${process.env.TOPICS}`);
+
+            cron.schedule("*/3 * * * * *", async function() {
+                console.log("********** syncing topics and functions ************");
                 let res =
                     await fetch(`${faas}/system/functions`);
                 let functions = await res.json();
                 let topics = process.env.TOPICS.split(",");
                 for(let topic of topics){
-                    console.log(eventService.subscriptions.get(topic));
+                    eventService.subscriptions.get(topic).functions = filter(functions, topic);
+                    console.log(`Mapped topic: ${topic} to functions => {${eventService.subscriptions.get(topic).functions.map(f => f.name)}}` )
                 }
-
-                console.log("subscription updated");
+                console.log("****************************************************");
             });
         }
         else{
@@ -62,3 +70,7 @@ const faas = `${protocol}://${process.env.FAAS_USER}:${process.env.FAAS_PASS}@${
        console.error(error);
     }
 })();
+
+function filter(functions, topic){
+  return _.filter(functions, o => o.annotations.topic ? o.annotations.topic.split(',').includes(topic) : false);
+}
