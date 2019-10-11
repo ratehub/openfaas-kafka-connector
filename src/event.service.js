@@ -20,7 +20,7 @@ class EventService {
         let kafakConfig = {
             clientId: serviceName,
             brokers: this.eventConnection.url.split(","),
-            connectionTimeout: 4000
+            connectionTimeout: 10000
         };
 
         if(this.eventConnection.ssl === true && !this.eventConnection.cert){
@@ -161,8 +161,8 @@ class EventService {
         }
     }
 
-    static createEvent(name, content, metadata){
-        return new Event(0,name,new Date(),content,metadata);
+    static createEvent(type, content, metadata){
+        return new Event(0,type,new Date(),content,metadata);
     }
 
     static _convertDataToEvent(ev){

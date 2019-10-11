@@ -14,7 +14,7 @@ will receive a  payload in the schema of:
 ```javascript
 { 
   sequenceNumber: '238',
-  name: 'event-type',
+  type: 'event-type',
   occurredAt: 1570734688789000,
   content:{ 
      property1: 'hello rates',

@@ -1,8 +1,8 @@
 class Subscription{
 
-    constructor(stream, name, functions, processor){
+    constructor(stream,type,functions, processor){
         this.stream = stream;
-        this.name = name;
+        this.type = type;
         this.processor = processor;
         this.functions = functions;
     }

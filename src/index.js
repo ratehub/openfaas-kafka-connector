@@ -17,7 +17,7 @@ const faas = `${protocol}://${process.env.FAAS_USER}:${process.env.FAAS_PASS}@${
         let functions = await res.json();
         //console.log(functions);
         const eventService = new EventService(process.env.CONNECTOR_NAME,
-            {url: kafkaUri, ssl: process.env.KAFKA_SSL,
+            {url: kafkaUri, ssl: process.env.KAFKA_SSL === 'true',
                 ca: process.env.KAFKA_SSL_CA,
                 key: process.env.KAFKA_SSL_KEY,
                 cert: process.env.KAFKA_SSL_CERT
@@ -38,7 +38,7 @@ const faas = `${protocol}://${process.env.FAAS_USER}:${process.env.FAAS_PASS}@${
                         });
                         if(res.ok) {
                             console.log(await res.json());
-                           console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+                            console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
                         }
                         else{
                             throw Error(JSON.stringify(await res.json()));
