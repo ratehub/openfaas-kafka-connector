@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "bee-queue": "^1.2.2",
+    "console-stamp": "^0.2.9",
     "dotenv": "^6.2.0",
     "kafkajs": "^1.7.0",
     "lodash": "^4.17.15",

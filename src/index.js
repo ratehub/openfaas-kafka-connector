@@ -8,6 +8,8 @@ const kafkaUri = process.env.KAFKA_CONNECTION;
 const https = process.env.FAAS_SSL === "true";
 const protocol = https ? "https" : "http";
 const faas = `${protocol}://${process.env.FAAS_USER}:${process.env.FAAS_PASS}@${process.env.FAAS_URI}`;
+require('console-stamp')(console);
+
 
 (async () =>
 {
@@ -30,7 +32,7 @@ const faas = `${protocol}://${process.env.FAAS_USER}:${process.env.FAAS_PASS}@${
             for (let topic of topics) {
                 let f = filter(functions, topic);
                 eventService.subscribe(topic,
-                    `${process.env.CONNECTOR_NAME}-${topic}`, f, async (payload, done) => {
+                    `${topic}`, f, async (payload, done) => {
                         let res = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                             method: 'post',
                             body: JSON.stringify(payload.data),
