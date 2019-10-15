@@ -1,15 +1,39 @@
+const fs = require('fs');
 const EventService  = require('./event.service');
 const fetch = require('node-fetch');
 const _ = require('lodash');
 const cron = require("node-cron");
 const dotenv = require('dotenv').config({path: __dirname + '/.env'});
-
-const kafkaUri = process.env.KAFKA_CONNECTION;
-const https = process.env.FAAS_SSL === "true";
-const protocol = https ? "https" : "http";
-const faas = `${protocol}://${process.env.FAAS_USER}:${process.env.FAAS_PASS}@${process.env.FAAS_URI}`;
 require('console-stamp')(console);
 
+const kafkaUri = process.env.KAFKA_CONNECTION;
+const https = process.env.GATEWAY_SSL === "true";
+const protocol = https ? "https" : "http";
+let gatewayUser = process.env.GATEWAY_USER;
+let gatewayPass = process.env.GATEWAY_PASS;
+let ca = process.env.KAFKA_SSL_CA;
+let key = process.env.KAFKA_SSL_KEY;
+let cert = process.env.KAFKA_SSL_CERT;
+let redisPassword = process.env.REDIS_PASS;
+
+if (fs.existsSync('/var/secrets/basic-auth-user')){
+    gatewayUser = fs.readFileSync('/var/secrets/basic-auth-user');
+    gatewayPass = fs.readFileSync('/var/secrets/basic-auth-password');
+}
+
+if(fs.existsSync('/var/connector-secrets')){
+    if(fs.existsSync('/var/connector-secrets')) {
+        ca = fs.readFileSync('/var/connector-secrets/kafka_ssl_ca');
+        key = fs.readFileSync('/var/connector-secrets/kafka_ssl_key');
+        cert = fs.readFileSync('/var/connector-secrets/kafka_ssl_cert');
+    }
+
+    if(fs.existsSync('/var/connector-secrets/redis_pass')){
+        redisPassword = fs.readFileSync('/var/connector-secrets/redis_pass');
+    }
+}
+
+const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_URI}`;
 
 (async () =>
 {
@@ -20,10 +44,10 @@ require('console-stamp')(console);
         //console.log(functions);
         const eventService = new EventService(process.env.CONNECTOR_NAME,
             {url: kafkaUri, ssl: process.env.KAFKA_SSL === 'true',
-                ca: process.env.KAFKA_SSL_CA,
-                key: process.env.KAFKA_SSL_KEY,
-                cert: process.env.KAFKA_SSL_CERT
-            },{ url: process.env.REDIS_CONNECTION, password: process.env.REDIS_PASS,
+                ca: ca,
+                key: key,
+                cert: cert
+            },{ url: process.env.REDIS_CONNECTION, password: redisPassword,
                 port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL }
         );
 
@@ -33,17 +57,17 @@ require('console-stamp')(console);
                 let f = filter(functions, topic);
                 eventService.subscribe(topic,
                     `${topic}`, f, async (payload, done) => {
-                        let res = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                        let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                             method: 'post',
                             body: JSON.stringify(payload.data),
                             headers: {'Content-Type': 'application/json'},
                         });
-                        if(res.ok) {
-                            console.log(await res.json());
+                        if(functionResponse.ok) {
+                            //console.log(await res.json());
                             console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
                         }
                         else{
-                            throw Error(JSON.stringify(await res.json()));
+                            throw Error(JSON.stringify(await functionResponse.json()));
                         }
                 });
             }
@@ -53,12 +77,12 @@ require('console-stamp')(console);
 
             cron.schedule("*/3 * * * * *", async function() {
                 console.log("********** syncing topics and functions ************");
-                let res =
+                let listFunctionsResponse =
                     await fetch(`${faas}/system/functions`);
-                let functions = await res.json();
-                let topics = process.env.TOPICS.split(",");
-                for(let topic of topics){
-                    eventService.subscriptions.get(topic).functions = filter(functions, topic);
+                let allFunctions = await listFunctionsResponse.json();
+                let listeningTopics = process.env.TOPICS.split(",");
+                for(let topic of listeningTopics){
+                    eventService.subscriptions.get(topic).functions = filter(allFunctions, topic);
                     console.log(`Mapped topic: ${topic} to functions => {${eventService.subscriptions.get(topic).functions.map(f => f.name)}}` )
                 }
                 console.log("****************************************************");

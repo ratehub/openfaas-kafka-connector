@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openfaas-kafka-connector.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
+    helm.sh/chart: {{ include "openfaas-kafka-connector.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      volumes:
+        - name: auth
+          secret:
+            secretName: basic-auth
+        - name: connector
+          secret:
+            secretName: openfaas-connector
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: CONNECTOR_NAME
+              value: {{ .Values.connector_name | quote }}
+            - name: GATEWAY_URI
+              value: {{ .Values.gateway_uri | quote }}
+            - name: GATEWAY_SSL
+              value: {{ .Values.gateway_ssl  }}
+            - name: TOPICS
+              value: {{ .Values.topics | quote }}
+            - name: KAFKA_CONNECTION
+              value: {{ .Values.kafka_connection | quote }}
+            - name: KAFKA_SSL
+              value: {{ .Values.kafka_ssl | quote }}
+            - name: REDIS_CONNECTION
+              value: {{ .Values.redis_connection | quote }}
+            - name: REDIS_SSL
+              value: {{ .Values.redis_ssl | quote }}
+            - name: REDIS_PORT
+              value: {{ .Values.redis_port | quote }}
+          volumeMounts:
+            - name: auth
+              readOnly: true
+              mountPath: "/var/secrets"
+            - name: connector
+              readOnly: true
+              mountPath: "/var/connector-secrets"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

@@ -10,11 +10,6 @@ cache: npm
 services:
   - docker
 
-before_install:
-  - echo always-auth=true > .npmrc
-  - echo registry=https://packagecloud.io/ratehub/npm/npm/ >> .npmrc
-  - echo //packagecloud.io/ratehub/npm/npm/:_authToken=${PACKAGECLOUD_TOKEN} >> .npmrc
-
 script:
   - export VERSION=`cat $TRAVIS_BUILD_DIR/package.json | jq -r '.version'`
   - export DOCKER_TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo $VERSION; else echo $VERSION-$TRAVIS_BRANCH-r1; fi`
