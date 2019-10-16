@@ -9,7 +9,7 @@ connector_name: openfaas-kafka-connector
 gateway_uri: gateway.openfaas:8080
 gateway_ssl: false
 topics: test-stream-1,mortgage-application-dev
-kafka_connection: ratehub-kafka-ratehub-094c.aivencloud.com:21424
+kafka_connection: kafka:21424
 kafka_ssl: true
 redis_connection: 127.0.0.1
 redis_ssl: false
