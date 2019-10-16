@@ -78,7 +78,7 @@ GATEWAY_USER=ratehub
 GATEWAY_PASS=password
 GATEWAY_SSL=true
 TOPICS=test-stream-1,mortgage-application-dev
-KAFKA_CONNECTION=ratehub-kafka-ratehub-094c.aivencloud.com:21424
+KAFKA_CONNECTION=kafka:21424
 KAFKA_SSL=true
 # use secrets for these when possible
 KAFKA_SSL_CA=../ca.pem
