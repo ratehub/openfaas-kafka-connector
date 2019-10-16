@@ -22,7 +22,7 @@ if (fs.existsSync('/var/secrets/basic-auth-user')){
 }
 
 if(fs.existsSync('/var/connector-secrets')){
-    if(fs.existsSync('/var/connector-secrets/kafka_ssl_cert')) {
+    if(fs.existsSync('/var/connector-secrets/kafka-ssl-cert')) {
         ca = '/var/connector-secrets/kafka-ssl-ca';
         key = '/var/connector-secrets/kafka-ssl-key';
         cert = '/var/connector-secrets/kafka-ssl-cert';

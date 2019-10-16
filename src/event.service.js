@@ -16,25 +16,6 @@ class EventService {
     constructor(serviceName, eventConnection, jobQueueConnection){
         this.eventConnection = eventConnection;
         this.jobQueueConnection = jobQueueConnection;
-
-        let kafakConfig = {
-            clientId: serviceName,
-            brokers: this.eventConnection.url.split(","),
-            connectionTimeout: 10000
-        };
-
-        if(this.eventConnection.ssl === true && !this.eventConnection.cert){
-            kafakConfig.ssl = true;
-        }
-        else if(this.eventConnection.ssl){
-            kafakConfig.ssl = {
-                rejectUnauthorized: false,
-                ca: [fs.readFileSync(this.eventConnection.ca, 'utf-8')],
-                key: fs.readFileSync(this.eventConnection.key, 'utf-8'),
-                cert: fs.readFileSync(this.eventConnection.cert, 'utf-8')
-            }
-        }
-
         this.serviceName = serviceName;
         this.subscriptions = new Map();
         this.queues = new Map();
@@ -93,11 +74,14 @@ class EventService {
         try {
             let connection = {
                 logLevel: logLevel.INFO,
-                brokers: [this.eventConnection.url],
+                brokers: this.eventConnection.url.split(","),
                 clientId: this.serviceName.concat("_", subscription.name) + uuid.v4().toString(),
             };
 
-            if(this.eventConnection.ssl){
+            if(this.eventConnection.ssl === true && !this.eventConnection.cert){
+                connection.ssl = true;
+            }
+            else if(this.eventConnection.ssl){
                 connection.ssl = {
                     rejectUnauthorized: false,
                     ca: [fs.readFileSync(this.eventConnection.ca, 'utf-8')],

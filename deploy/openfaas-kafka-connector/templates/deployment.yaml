@@ -1,10 +1,9 @@
-apiVersion: apps/v1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: {{ include "openfaas-kafka-connector.fullname" . }}
   labels:
     app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
-    helm.sh/chart: {{ include "openfaas-kafka-connector.chart" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
@@ -35,19 +34,19 @@ spec:
             - name: GATEWAY_URI
               value: {{ .Values.gateway_uri | quote }}
             - name: GATEWAY_SSL
-              value: {{ .Values.gateway_ssl  }}
+              value: {{ .Values.gateway_ssl | quote  }}
             - name: TOPICS
               value: {{ .Values.topics | quote }}
             - name: KAFKA_CONNECTION
               value: {{ .Values.kafka_connection | quote }}
             - name: KAFKA_SSL
-              value: {{ .Values.kafka_ssl }}
+              value: {{ .Values.kafka_ssl | quote }}
             - name: REDIS_CONNECTION
               value: {{ .Values.redis_connection | quote }}
             - name: REDIS_SSL
-              value: {{ .Values.redis_ssl }}
+              value: {{ .Values.redis_ssl | quote }}
             - name: REDIS_PORT
-              value: {{ .Values.redis_port }}
+              value: {{ .Values.redis_port | quote }}
           volumeMounts:
             - name: auth
               readOnly: true
