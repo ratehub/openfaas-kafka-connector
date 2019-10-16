@@ -28,8 +28,7 @@ spec:
             secretName: openfaas-connector
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.image }}"
           env:
             - name: CONNECTOR_NAME
               value: {{ .Values.connector_name | quote }}
@@ -42,13 +41,13 @@ spec:
             - name: KAFKA_CONNECTION
               value: {{ .Values.kafka_connection | quote }}
             - name: KAFKA_SSL
-              value: {{ .Values.kafka_ssl | quote }}
+              value: {{ .Values.kafka_ssl }}
             - name: REDIS_CONNECTION
               value: {{ .Values.redis_connection | quote }}
             - name: REDIS_SSL
-              value: {{ .Values.redis_ssl | quote }}
+              value: {{ .Values.redis_ssl }}
             - name: REDIS_PORT
-              value: {{ .Values.redis_port | quote }}
+              value: {{ .Values.redis_port }}
           volumeMounts:
             - name: auth
               readOnly: true

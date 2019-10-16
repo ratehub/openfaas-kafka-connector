@@ -22,14 +22,14 @@ if (fs.existsSync('/var/secrets/basic-auth-user')){
 }
 
 if(fs.existsSync('/var/connector-secrets')){
-    if(fs.existsSync('/var/connector-secrets')) {
-        ca = fs.readFileSync('/var/connector-secrets/kafka_ssl_ca');
-        key = fs.readFileSync('/var/connector-secrets/kafka_ssl_key');
-        cert = fs.readFileSync('/var/connector-secrets/kafka_ssl_cert');
+    if(fs.existsSync('/var/connector-secrets/kafka_ssl_cert')) {
+        ca = '/var/connector-secrets/kafka-ssl-ca';
+        key = '/var/connector-secrets/kafka-ssl-key';
+        cert = '/var/connector-secrets/kafka-ssl-cert';
     }
 
-    if(fs.existsSync('/var/connector-secrets/redis_pass')){
-        redisPassword = fs.readFileSync('/var/connector-secrets/redis_pass');
+    if(fs.existsSync('/var/connector-secrets/redis-pass')){
+        redisPassword = fs.readFileSync('/var/connector-secrets/redis-pass');
     }
 }
 

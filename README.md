@@ -6,7 +6,24 @@ You can deploy on the same cluster as OpenFaaS or externally as long as the conn
 
 [Check out OpenFaaS](https://www.openfaas.com/)
 
-The connector has a dependency on redis. 
+
+### Configuration recommended 
+1. You will need to add a redis instance in the cluster, [Redis helm chart](https://github.com/helm/charts/tree/master/stable/redis)
+2. Make sure you deploy this in the same namespace as openFaaS, this will use the secret created for basic auth on the OpenFaaS gateway
+3. If secure connection is required for kafka and redis please create these secrets in the openFaas namespace
+
+```
+kubectl create secret generic openfaas-connector \
+--from-file=kafka-ssl-ca=ca.pem \
+--from-file=kafka-ssl-cert=service.cert \
+--from-file=kafka-ssl-key=service.key \ 
+--from-literal=redis-pass=password --namespace openfaas
+```
+
+4. Deploy openfaas-kafka-connector with helm chart
+
+Note: you can deploy the connector anywhere, in this case you can use env vars to set connector
+configuration  
 
 Kafka does not enforce a payload structure, we have abstracted this into a Event object, your functions
 will receive a  payload in the schema of: 
@@ -45,34 +62,36 @@ node.js project for event consuming and producing. (TBA for public npm package)
 Helm chart coming soon! 
 
 ### Annonations for function deploy: 
-
-`topic = "test-stream" - the kafka topic to listen to`
-
-`strategy = "fixed" || "expontential" - default fixed`
-
-`retryLatency = 1000 - in milliseconds - default 1000`
-
-`retries = 1 how many times to retry the function`
-
-`delay = 1000 delay the job in milliseconds`
+```
+topic = "test-stream" - the kafka topic to listen to
+strategy = "fixed" || "expontential" - default fixed
+retryLatency = 1000 - in milliseconds - default 1000
+retries = 1 how many times to retry the function
+delay = 1000 delay the job in milliseconds`
+```
 
 ## Environment  settings
 ```
 CONNECTOR_NAME=faas-connector
-FAAS_URI=<uri:port>
-FAAS_USER=<gateway username>
-FAAS_PASS=<gateway password>
-FAAS_SSL=true 
-TOPICS=test-topic1, test-topic2
-KAFKA_CONNECTION=<kafka broker uri:port>
+GATEWAY_URI=faas-staging.ratehub.ca
+GATEWAY_USER=ratehub
+GATEWAY_PASS=password
+GATEWAY_SSL=true
+TOPICS=test-stream-1,mortgage-application-dev
+KAFKA_CONNECTION=ratehub-kafka-ratehub-094c.aivencloud.com:21424
 KAFKA_SSL=true
+# use secrets for these when possible
 KAFKA_SSL_CA=../ca.pem
 KAFKA_SSL_KEY=../service.key
 KAFKA_SSL_CERT=../service.cert
+# ------
 REDIS_CONNECTION=127.0.0.1
+# use secrets for this when possible
 REDIS_PASS=password
+# -----
 REDIS_SSL=true
 REDIS_PORT=6379
+```
 
 
 
