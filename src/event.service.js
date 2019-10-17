@@ -126,7 +126,7 @@ class EventService {
                         job.retries(1);
                     }
 
-                    job.save();
+                    await job.save();
                 }
             }
         });

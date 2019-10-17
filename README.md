@@ -1,4 +1,4 @@
-# (WIP ALPHA) openfaas-kafka-connector
+# (BETA) openfaas-kafka-connector
 ## Note: this is still a WIP and is under-going testing
 
 An OpenFaaS kafka connector written in node.js with retries, back-off strategies, and delayed function invokes.
@@ -59,15 +59,13 @@ event store and event sourcing patterns, which we have an event-service library 
 node.js project for event consuming and producing. (TBA for public npm package)
 
 
-Helm chart coming soon! 
-
 ### Annonations for function deploy: 
 ```
-topic = "test-stream" - the kafka topic to listen to
-strategy = "fixed" || "expontential" - default fixed
-retryLatency = 1000 - in milliseconds - default 1000
-retries = 1 how many times to retry the function
-delay = 1000 delay the job in milliseconds`
+"topic": "test-stream, another-stream" - the kafka topic to listen to
+"strategy":"fixed" || "expontential" - default fixed
+"retryLatency": 1000 - in milliseconds - default 1000
+"retries" : 1 how many times to retry the function
+"delay" : 1000 delay the job in milliseconds
 ```
 
 ## Environment  settings
