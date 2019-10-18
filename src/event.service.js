@@ -117,7 +117,7 @@ class EventService {
                     }
 
                     if(f.annotations.delay) {
-                        job.delayUntil(new Date(Date.now() + f.annotations.delay));
+                        job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
                     }
 
                     if(f.annotations.retries) {
