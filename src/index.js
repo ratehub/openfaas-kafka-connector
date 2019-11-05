@@ -68,7 +68,7 @@ const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_
                         }
                         else{
                             console.error(`Error invoking function: ${payload.data.metadata.function}`);
-                            console.error(JSON.stringify(await functionResponse.json()));
+                            console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
                             throw Error(JSON.stringify(await functionResponse.json()));
                         }
                 });
