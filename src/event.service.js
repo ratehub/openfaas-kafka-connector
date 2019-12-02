@@ -110,20 +110,17 @@ class EventService {
                     event.metadata = {function: f.name };
                     const queue = this.queues.get(subscription.name);
                     let job = queue.createJob(event);
-                    if(!f.annotations.strategy) { f.annotations.strategy = 'fixed'; }
+                    
                     if (f.annotations.strategy === 'fixed' || f.strategy === 'exponential') {
                         if(!f.annotations.retryLatency){f.annotations.retryLatency = 1000 ;}
                         job.backoff(f.annotations.strategy, f.annotations.retryLatency);
+                        if(f.annotations.retries) {
+                            job.retries(f.annotations.retries);
+                        }
                     }
 
                     if(f.annotations.delay) {
                         job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
-                    }
-
-                    if(f.annotations.retries) {
-                        job.retries(f.annotations.retries);
-                    }else{
-                        job.retries(1);
                     }
 
                     await job.save();
