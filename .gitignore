@@ -64,3 +64,5 @@ typings/
 *.cert
 *.key
 .env
+/deploy/openfaas-kafka-connector/values-prod.yaml
+/deploy/openfaas-kafka-connector/values-staging.yaml

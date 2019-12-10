@@ -34,14 +34,13 @@ if(fs.existsSync('/var/connector-secrets')){
 }
 
 const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_URI}`;
-
+let topics = null;
 (async () =>
 {
     try {
         let res =
             await fetch(`${faas}/system/functions`);
         let functions = await res.json();
-        //console.log(functions);
         const eventService = new EventService(process.env.CONNECTOR_NAME,
             {url: kafkaUri, ssl: process.env.KAFKA_SSL === 'true',
                 ca: ca,
@@ -51,8 +50,9 @@ const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_
                 port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL }
         );
 
-        if(process.env.TOPICS) {
-            let topics = process.env.TOPICS.split(",");
+        topics = process.env.TOPICS ? process.env.TOPICS.split(",") : await getTopics();
+
+        if(topics != null && topics.length > 0) {
             for (let topic of topics) {
                 let f = filter(functions, topic);
                 eventService.subscribe(topic,
@@ -63,7 +63,6 @@ const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_
                             headers: {'Content-Type': 'application/json'},
                         });
                         if(functionResponse.ok) {
-                            //console.log(await res.json());
                             console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
                         }
                         else{
@@ -75,15 +74,23 @@ const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_
             }
 
             await eventService.start();
-            console.log(`listening to topics: ${process.env.TOPICS}`);
+            console.log(`listening to topics: ${topics}`);
 
             cron.schedule("*/3 * * * * *", async function() {
                 console.log("********** syncing topics and functions ************");
+                if(!process.env.TOPICS){
+                    topics = await getTopics();
+                }
+
                 let listFunctionsResponse =
                     await fetch(`${faas}/system/functions`);
                 let allFunctions = await listFunctionsResponse.json();
-                let listeningTopics = process.env.TOPICS.split(",");
-                for(let topic of listeningTopics){
+                for(let topic of topics){
+                    let subscription = eventService.subscriptions.get(topic);
+                    if(!subscription){
+                        //add subscription
+                        //_createSubscription
+                    }
                     eventService.subscriptions.get(topic).functions = filter(allFunctions, topic);
                     console.log(`Mapped topic: ${topic} to functions => {${eventService.subscriptions.get(topic).functions.map(f => f.name)}}` )
                 }
@@ -91,7 +98,7 @@ const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_
             });
         }
         else{
-            console.error("No topics have been defined, please set env setting TOPICS with a comma delimited string")
+            console.error("No topics have been defined, please set env setting TOPICS with a comma delimited string or annotate functions with topic")
         }
     }
     catch(error){
@@ -101,4 +108,15 @@ const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_
 
 function filter(functions, topic){
   return _.filter(functions, o => o.annotations.topic ? o.annotations.topic.split(',').includes(topic) : false);
+}
+
+async function getTopics() {
+    let res =
+        await fetch(`${faas}/system/functions`);
+    let functions = await res.json();
+    return _.chain(functions).map(function(item) { return item.annotations.topic }).uniq().value();
+}
+
+async function subscribe(eventService, topic, functions){
+
 }
