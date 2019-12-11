@@ -55,22 +55,7 @@ let topics = null;
         if(topics != null && topics.length > 0) {
             for (let topic of topics) {
                 let f = filter(functions, topic);
-                eventService.subscribe(topic,
-                    `${topic}`, f, async (payload, done) => {
-                        let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
-                            method: 'post',
-                            body: JSON.stringify(payload.data),
-                            headers: {'Content-Type': 'application/json'},
-                        });
-                        if(functionResponse.ok) {
-                            console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
-                        }
-                        else{
-                            console.error(`Error invoking function: ${payload.data.metadata.function}`);
-                            console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
-                            throw Error(JSON.stringify(await functionResponse.json()));
-                        }
-                });
+                await subscribe(eventService, topic, f);
             }
 
             await eventService.start();
@@ -88,8 +73,8 @@ let topics = null;
                 for(let topic of topics){
                     let subscription = eventService.subscriptions.get(topic);
                     if(!subscription){
-                        //add subscription
-                        //_createSubscription
+                        await subscribe(eventService, topic, []);
+                        await eventService.enableSubscription(eventService.subscriptions.get(topic));
                     }
                     eventService.subscriptions.get(topic).functions = filter(allFunctions, topic);
                     console.log(`Mapped topic: ${topic} to functions => {${eventService.subscriptions.get(topic).functions.map(f => f.name)}}` )
@@ -114,9 +99,33 @@ async function getTopics() {
     let res =
         await fetch(`${faas}/system/functions`);
     let functions = await res.json();
-    return _.chain(functions).map(function(item) { return item.annotations.topic }).uniq().value();
+    let rawTopics =_.chain(functions).map(function(item) { return item.annotations.topic }).uniq().value();
+    let normalizedTopics = [];
+    for(let topic of rawTopics){
+        if(topic) {
+            for(let t of topic.split(',')) {
+                normalizedTopics.push(t);
+            }
+        }
+    }
+    return _.uniq(normalizedTopics);
 }
 
 async function subscribe(eventService, topic, functions){
-
+    await eventService.subscribe(topic,
+        `${topic}`, functions, async (payload, done) => {
+            let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                method: 'post',
+                body: JSON.stringify(payload.data),
+                headers: {'Content-Type': 'application/json'},
+            });
+            if(functionResponse.ok) {
+                console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+            }
+            else{
+                console.error(`Error invoking function: ${payload.data.metadata.function}`);
+                console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
+                throw Error(JSON.stringify(await functionResponse.json()));
+            }
+    });
 }
