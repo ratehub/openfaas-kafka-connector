@@ -52,6 +52,12 @@ class EventService {
         return this.subscriptions.get(stream);
     }
 
+    async enableSubscription(subscription) {
+        await this._createSubscription(subscription);
+        this._createQueue(subscription);
+        await this._connectToSubscription(subscription);
+    }
+
     /**
      * First operation that should be called after creating the service
      */
@@ -110,7 +116,7 @@ class EventService {
                     event.metadata = {function: f.name };
                     const queue = this.queues.get(subscription.name);
                     let job = queue.createJob(event);
-                    
+
                     if (f.annotations.strategy === 'fixed' || f.strategy === 'exponential') {
                         if(!f.annotations.retryLatency){f.annotations.retryLatency = 1000 ;}
                         job.backoff(f.annotations.strategy, f.annotations.retryLatency);

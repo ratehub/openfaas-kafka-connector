@@ -35,8 +35,10 @@ spec:
               value: {{ .Values.gateway_uri | quote }}
             - name: GATEWAY_SSL
               value: {{ .Values.gateway_ssl | quote  }}
+              {{ if .Values.topics }}
             - name: TOPICS
               value: {{ .Values.topics | quote }}
+              {{ end }}
             - name: KAFKA_CONNECTION
               value: {{ .Values.kafka_connection | quote }}
             - name: KAFKA_SSL

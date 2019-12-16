@@ -1,5 +1,4 @@
-# (BETA) openfaas-kafka-connector
-## Note: this is still a WIP and is under-going testing
+# openfaas-kafka-connector
 
 An OpenFaaS kafka connector written in node.js with retries, back-off strategies, and delayed function invokes.
 You can deploy on the same cluster as OpenFaaS or externally as long as the connector has access to OpenFaaS gateway.
@@ -67,17 +66,22 @@ node.js project for event consuming and producing. (TBA for public npm package)
 "retries" : 1 how many times to retry the function
 "delay" : 1000 delay the job in milliseconds
 ```
+The kafka connector can be configured to automatically subscribing to topics if do not set the "TOPICS" env variable
+depending on the circumstance this may be desirable. 
+
+A use case you may not want to have automatic subscription is for performance, you can have multiple connectors
+running for specific topics to divide the work load
 
 ## Environment  settings
 ```
 CONNECTOR_NAME=faas-connector
-GATEWAY_URI=faas-staging.ratehub.ca
-GATEWAY_USER=ratehub
+GATEWAY_URI=gateway:8080
+GATEWAY_USER=user
 GATEWAY_PASS=password
 GATEWAY_SSL=true
-TOPICS=test-stream-1,mortgage-application-dev
-KAFKA_CONNECTION=kafka:21424
-KAFKA_SSL=true
+TOPICS=test-stream-1,test-stream-2
+KAFKA_CONNECTION=127.0.0.1:9092
+KAFKA_SSL=false
 # use secrets for these when possible
 KAFKA_SSL_CA=../ca.pem
 KAFKA_SSL_KEY=../service.key
@@ -87,9 +91,10 @@ REDIS_CONNECTION=127.0.0.1
 # use secrets for this when possible
 REDIS_PASS=password
 # -----
-REDIS_SSL=true
+REDIS_SSL=false
 REDIS_PORT=6379
 ```
+
 
 
 
