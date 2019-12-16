@@ -8,7 +8,7 @@ image: ratehub/openfaas-kafka-connector:latest
 connector_name: openfaas-kafka-connector
 gateway_uri: gateway:8080
 gateway_ssl: false
-topics: test-stream-1
+#topics: test-stream-1
 kafka_connection: 127.0.0.1:9092
 kafka_ssl: false
 redis_connection: 127.0.0.1
