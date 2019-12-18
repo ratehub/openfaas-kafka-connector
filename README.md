@@ -66,11 +66,7 @@ node.js project for event consuming and producing. (TBA for public npm package)
 "retries" : 1 how many times to retry the function
 "delay" : 1000 delay the job in milliseconds
 ```
-The kafka connector can be configured to automatically subscribing to topics if do not set the "TOPICS" env variable
-depending on the circumstance this may be desirable. 
-
-A use case you may not want to have automatic subscription is for performance, you can have multiple connectors
-running for specific topics to divide the work load
+If you do not include the "TOPICS" environment variable the connector will auto subscribe to topics 
 
 ## Environment  settings
 ```
@@ -79,7 +75,8 @@ GATEWAY_URI=gateway:8080
 GATEWAY_USER=user
 GATEWAY_PASS=password
 GATEWAY_SSL=true
-TOPICS=test-stream-1,test-stream-2
+#Excluding TOPICS will auto subscribe to topics that functions are using
+#TOPICS=test-stream-1,test-stream-2 
 KAFKA_CONNECTION=127.0.0.1:9092
 KAFKA_SSL=false
 # use secrets for these when possible
