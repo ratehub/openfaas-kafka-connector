@@ -112,6 +112,7 @@ class EventService {
         await this.consumers.get(subscription.stream).run({
             eachMessage: async ({ topic, partition, message }) => {
                 let event = EventService._convertDataToEvent(message);
+                if(event == null) { return }
                 for(let f of subscription.functions){
                     event.metadata = {function: f.name };
                     const queue = this.queues.get(subscription.name);
@@ -119,7 +120,7 @@ class EventService {
 
                     if (f.annotations.strategy === 'fixed' || f.strategy === 'exponential') {
                         if(!f.annotations.retryLatency){f.annotations.retryLatency = 1000 ;}
-                        job.backoff(f.annotations.strategy, f.annotations.retryLatency);
+                        job.backoff(f.annotations.strategy, Number(f.annotations.retryLatency));
                         if(f.annotations.retries) {
                             job.retries(f.annotations.retries);
                         }
@@ -153,13 +154,18 @@ class EventService {
     }
 
     static _convertDataToEvent(ev){
-        let message = JSON.parse(ev.value);
-        if(!message.type || message.type instanceof String){
-            console.error("Event does not have a type or type in wrong format");
+        try {
+            let message = JSON.parse(ev.value);
+            if (!message.type || message.type instanceof String) {
+                console.error("Event does not have a type or type in wrong format");
+                return null;
+            }
+            return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
+                message.content);
+        }catch(error){
+            console.error(`Payload not in Json format: ${error}`);
             return null;
         }
-        return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
-            message.content);
     }
 }
 
