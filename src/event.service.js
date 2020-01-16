@@ -28,7 +28,7 @@ class EventService {
                 password: this.jobQueueConnection.password,
                 port: this.jobQueueConnection.port,
                 db: 0,
-                tls: this.eventConnection.tls,
+                tls: this.jobQueueConnection.tls,
                 options: {
                 }
             },

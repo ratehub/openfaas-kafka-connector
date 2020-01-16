@@ -47,7 +47,7 @@ let topics = null;
                 key: key,
                 cert: cert
             },{ url: process.env.REDIS_CONNECTION, password: redisPassword,
-                port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL }
+                port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL === 'true' }
         );
 
         topics = process.env.TOPICS ? process.env.TOPICS.split(",") : await getTopics();
