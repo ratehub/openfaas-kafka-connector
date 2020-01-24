@@ -39,6 +39,10 @@ spec:
             - name: TOPICS
               value: {{ .Values.topics | quote }}
               {{ end }}
+              {{ if .Values.excludeTopics }}
+            - name: EXCLUDE_TOPICS
+              value: {{ .Values.excludeTopics | quote }}
+              {{ end }}
             - name: KAFKA_CONNECTION
               value: {{ .Values.kafka_connection | quote }}
             - name: KAFKA_SSL
