@@ -113,6 +113,7 @@ class EventService {
             eachMessage: async ({ topic, partition, message }) => {
                 let event = EventService._convertDataToEvent(message);
                 if(event == null) { return }
+                console.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
                     event.metadata = {function: f.name };
                     const queue = this.queues.get(subscription.name);
@@ -131,6 +132,7 @@ class EventService {
                     }
 
                     await job.save();
+                    console.log(`Created job for function: ${f.name}`);
                 }
             }
         });

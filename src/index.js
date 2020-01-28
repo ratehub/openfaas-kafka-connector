@@ -35,6 +35,9 @@ if(fs.existsSync('/var/connector-secrets')){
 
 const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_URI}`;
 let topics = null;
+let excludeTopics = [];
+let includeTopics = [];
+
 (async () =>
 {
     try {
@@ -52,17 +55,24 @@ let topics = null;
 
         topics = process.env.TOPICS ? process.env.TOPICS.split(",") : await getTopics();
 
+        if(process.env.EXCLUDE_TOPICS){
+            excludeTopics = process.env.EXCLUDE_TOPICS.split(",");
+        }
+
         if(topics != null && topics.length > 0) {
             for (let topic of topics) {
-                let f = filter(functions, topic);
-                await subscribe(eventService, topic, f);
+                if(!excludeTopics.includes(topic)) {
+                    includeTopics.push(topic);
+                    let f = filter(functions, topic);
+                    await subscribe(eventService, topic, f);
+                }
             }
 
             await eventService.start();
-            console.log(`listening to topics: ${topics}`);
+            console.log(`listening to topics: ${includeTopics}`);
+            console.log(`excluding topics: ${excludeTopics}`);
 
             cron.schedule("*/3 * * * * *", async function() {
-                console.log("********** syncing topics and functions ************");
                 if(!process.env.TOPICS){
                     topics = await getTopics();
                 }
@@ -71,15 +81,18 @@ let topics = null;
                     await fetch(`${faas}/system/functions`);
                 let allFunctions = await listFunctionsResponse.json();
                 for(let topic of topics){
-                    let subscription = eventService.subscriptions.get(topic);
-                    if(!subscription){
-                        await subscribe(eventService, topic, []);
-                        await eventService.enableSubscription(eventService.subscriptions.get(topic));
+                    if(!excludeTopics.includes(topic)) {
+                        let subscription = eventService.subscriptions.get(topic);
+                        if (!subscription) {
+                            console.log('Mapped new topic: ${topic}');
+                            await subscribe(eventService, topic, []);
+                            await eventService.enableSubscription(eventService.subscriptions.get(topic));
+                        }
+                        eventService.subscriptions.get(topic).functions = filter(allFunctions, topic);
+                        //console.log(`Mapped topic: ${topic} to functions => {${eventService.subscriptions.get(topic).functions.map(f => f.name)}}` )
                     }
-                    eventService.subscriptions.get(topic).functions = filter(allFunctions, topic);
-                    console.log(`Mapped topic: ${topic} to functions => {${eventService.subscriptions.get(topic).functions.map(f => f.name)}}` )
                 }
-                console.log("****************************************************");
+                //console.log("****************************************************");
             });
         }
         else{
@@ -114,6 +127,7 @@ async function getTopics() {
 async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
         `${topic}`, functions, async (payload, done) => {
+            console.log(`executing: ${payload.data.metadata.function}`);
             let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                 method: 'post',
                 body: JSON.stringify(payload.data),
@@ -127,5 +141,6 @@ async function subscribe(eventService, topic, functions){
                 console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
                 throw Error(JSON.stringify(await functionResponse.json()));
             }
+            console.log(`finished: ${payload.data.metadata.function}`);
     });
 }
