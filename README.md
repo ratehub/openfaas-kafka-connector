@@ -83,6 +83,8 @@ KAFKA_SSL=false
 KAFKA_SSL_CA=../ca.pem
 KAFKA_SSL_KEY=../service.key
 KAFKA_SSL_CERT=../service.cert
+#how many active jobs it will process at one time
+CONCURRENCY=2
 # ------
 REDIS_CONNECTION=127.0.0.1
 # use secrets for this when possible

@@ -42,12 +42,13 @@ class EventService {
      * @param {string} stream - the stream to listen to events from
      * @param {string} subscriptionName - the name of subscription to create on the server (serviceName_subscription)
      * @param functions- an array functions to execute
+     * @param concurrency - an integer of how many current process can be on a queue
      * @param {function} processor - a function to process events or jobs
      * a custom object that will be processed by the processor function, if a transformer is not passed, the event will
      * pass through to the processor and the processor will use the raw event payload
      */
-    subscribe(stream, subscriptionName, functions, processor){
-        let subscription = new Subscription(stream, subscriptionName, functions, processor);
+    subscribe(stream, subscriptionName, functions, concurrency, processor){
+        let subscription = new Subscription(stream, subscriptionName, functions,  concurrency, processor);
         this.subscriptions.set(stream, subscription);
         return this.subscriptions.get(stream);
     }
@@ -73,7 +74,7 @@ class EventService {
     _createQueue(subscription){
         const queue = new Queue(subscription.name, this.queueOptions);
         this.queues.set(subscription.name, queue);
-        queue.process(subscription.processor);
+        queue.process(subscription.concurrency, subscription.processor);
     }
 
     async _createSubscription(subscription){
