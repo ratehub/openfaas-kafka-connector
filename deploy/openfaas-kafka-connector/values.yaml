@@ -15,6 +15,7 @@ kafka_ssl: false
 redis_connection: 127.0.0.1
 redis_ssl: false
 redis_port: 6379
+concurrency: 4
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

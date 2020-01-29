@@ -15,6 +15,8 @@ let ca = process.env.KAFKA_SSL_CA;
 let key = process.env.KAFKA_SSL_KEY;
 let cert = process.env.KAFKA_SSL_CERT;
 let redisPassword = process.env.REDIS_PASS;
+let concurrency = process.env.CONCURRENCY || 1;
+concurrency = Number(concurrency);
 
 if (fs.existsSync('/var/secrets/basic-auth-user')){
     gatewayUser = fs.readFileSync('/var/secrets/basic-auth-user');
@@ -126,7 +128,7 @@ async function getTopics() {
 
 async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
-        `${topic}`, functions, async (payload, done) => {
+        `${topic}`, functions, concurrency, async (payload, done) => {
             console.log(`executing: ${payload.data.metadata.function}`);
             let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                 method: 'post',
