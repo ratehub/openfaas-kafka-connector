@@ -85,6 +85,7 @@ KAFKA_SSL_KEY=../service.key
 KAFKA_SSL_CERT=../service.cert
 #how many active jobs it will process at one time
 CONCURRENCY=2
+TIMEOUT=30000 #Milliseconds for how long the job will wait for a response before quitting
 # ------
 REDIS_CONNECTION=127.0.0.1
 # use secrets for this when possible

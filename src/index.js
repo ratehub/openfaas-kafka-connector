@@ -17,6 +17,8 @@ let cert = process.env.KAFKA_SSL_CERT;
 let redisPassword = process.env.REDIS_PASS;
 let concurrency = process.env.CONCURRENCY || 1;
 concurrency = Number(concurrency);
+let requestTimeout = process.env.TIMEOUT || 30000;
+requestTimeout = Number(requestTimeout);
 
 if (fs.existsSync('/var/secrets/basic-auth-user')){
     gatewayUser = fs.readFileSync('/var/secrets/basic-auth-user');
@@ -130,19 +132,25 @@ async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
         `${topic}`, functions, concurrency, async (payload, done) => {
             console.log(`executing: ${payload.data.metadata.function}`);
-            let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
-                method: 'post',
-                body: JSON.stringify(payload.data),
-                headers: {'Content-Type': 'application/json'},
-            });
-            if(functionResponse.ok) {
-                console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+            try {
+                let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                    method: 'post',
+                    body: JSON.stringify(payload.data),
+                    headers: {'Content-Type': 'application/json'},
+                    timeout: requestTimeout
+                });
+                if (functionResponse.ok) {
+                    console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+                } else {
+                    console.error(`Error invoking function: ${payload.data.metadata.function}`);
+                    console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
+                    throw Error(JSON.stringify(await functionResponse.json()));
+                }
+            }catch (error) {
+                console.log(`Error: ${error}`);
+                throw error;
+            }finally {
+                console.log(`finished: ${payload.data.metadata.function}`);
             }
-            else{
-                console.error(`Error invoking function: ${payload.data.metadata.function}`);
-                console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
-                throw Error(JSON.stringify(await functionResponse.json()));
-            }
-            console.log(`finished: ${payload.data.metadata.function}`);
     });
 }
