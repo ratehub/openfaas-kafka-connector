@@ -24,7 +24,7 @@ class EventService {
         this.kafka = new Map();
 
         this.queueOptions= {
-            redis: redis.createClient({
+            redis: {
                 host: this.jobQueueConnection.url,
                 password: this.jobQueueConnection.password,
                 port: this.jobQueueConnection.port,
@@ -32,7 +32,7 @@ class EventService {
                 tls: this.jobQueueConnection.tls,
                 options: {
                 }
-            }),
+            },
             activateDelayedJobs: true,
             removeOnSuccess: true
         }
