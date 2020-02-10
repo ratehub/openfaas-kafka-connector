@@ -4,6 +4,7 @@ const Queue = require('bee-queue');
 const Event = require('./event');
 const Subscription =  require("./subscription");
 const fs = require('fs');
+const redis = require('redis');
 
 class EventService {
     /**
@@ -23,7 +24,7 @@ class EventService {
         this.kafka = new Map();
 
         this.queueOptions= {
-            redis: {
+            redis: redis.createClient({
                 host: this.jobQueueConnection.url,
                 password: this.jobQueueConnection.password,
                 port: this.jobQueueConnection.port,
@@ -31,7 +32,7 @@ class EventService {
                 tls: this.jobQueueConnection.tls,
                 options: {
                 }
-            },
+            }),
             activateDelayedJobs: true,
             removeOnSuccess: true
         }
