@@ -4,7 +4,6 @@ const Queue = require('bee-queue');
 const Event = require('./event');
 const Subscription =  require("./subscription");
 const fs = require('fs');
-const redis = require('redis');
 
 class EventService {
     /**
