@@ -136,9 +136,6 @@ async function subscribe(eventService, topic, functions){
             let event = payload.data;
             try {
                 if (payload.data.metadata.filter && eval(payload.data.metadata.filter)) {
-                    if (payload.data.metadata.function == "repeat") {
-                        console.log("Working");
-                    }
                     let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                         method: 'post',
                         body: JSON.stringify(event),
