@@ -117,6 +117,9 @@ class EventService {
                 console.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
                     event.metadata = {function: f.name };
+                    if (typeof f.annotations.filter === "string") {
+                        event.metadata.filter = f.annotations.filter; 
+                    }
                     const queue = this.queues.get(subscription.name);
                     let job = queue.createJob(event);
 

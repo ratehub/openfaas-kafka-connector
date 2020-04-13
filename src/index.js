@@ -109,7 +109,7 @@ let includeTopics = [];
 })();
 
 function filter(functions, topic){
-  return _.filter(functions, o => o.annotations.topic ? o.annotations.topic.split(',').includes(topic) : false);
+    return _.filter(functions, o => o.annotations.topic ? o.annotations.topic.split(',').includes(topic) : false);
 }
 
 async function getTopics() {
@@ -132,19 +132,29 @@ async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
         `${topic}`, functions, concurrency, async (payload, done) => {
             console.log(`executing: ${payload.data.metadata.function}`);
+            //console.log(payload.data);
+            let event = payload.data;
             try {
-                let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
-                    method: 'post',
-                    body: JSON.stringify(payload.data),
-                    headers: {'Content-Type': 'application/json'},
-                    timeout: requestTimeout
-                });
-                if (functionResponse.ok) {
-                    console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
-                } else {
-                    console.error(`Error invoking function: ${payload.data.metadata.function}`);
-                    console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
-                    throw Error(JSON.stringify(await functionResponse.json()));
+                if (payload.data.metadata.filter && eval(payload.data.metadata.filter)) {
+                    if (payload.data.metadata.function == "repeat") {
+                        console.log("Working");
+                    }
+                    let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                        method: 'post',
+                        body: JSON.stringify(event),
+                        headers: {'Content-Type': 'application/json'},
+                        timeout: requestTimeout
+                    });
+                    if (functionResponse.ok) {
+                        console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+                    } else {
+                        console.error(`Error invoking function: ${payload.data.metadata.function}`);
+                        console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
+                        throw Error(JSON.stringify(await functionResponse.json()));
+                    }
+                }
+                else if (payload.data.metadata.filter) {
+                    console.log(`Ignored filtered event for function: ${payload.data.metadata.function}`);
                 }
             }catch (error) {
                 console.log(`Error: ${error}`);
