@@ -132,10 +132,10 @@ async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
         `${topic}`, functions, concurrency, async (payload, done) => {
             console.log(`executing: ${payload.data.metadata.function}`);
-            //console.log(payload.data);
             let event = payload.data;
             try {
-                if (payload.data.metadata.filter && eval(payload.data.metadata.filter)) {
+                //If filter has been specifed, and it evaluates to true, or hasn't been specified
+                if ((payload.data.metadata.filter && eval(payload.data.metadata.filter)) || !payload.data.metadata.filter) {
                     let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                         method: 'post',
                         body: JSON.stringify(event),
