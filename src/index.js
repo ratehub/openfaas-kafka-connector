@@ -3,6 +3,7 @@ const EventService  = require('./event.service');
 const fetch = require('node-fetch');
 const _ = require('lodash');
 const cron = require("node-cron");
+var safeEval = require('safe-eval')
 const dotenv = require('dotenv').config({path: __dirname + '/.env'});
 require('console-stamp')(console);
 
@@ -133,9 +134,12 @@ async function subscribe(eventService, topic, functions){
         `${topic}`, functions, concurrency, async (payload, done) => {
             console.log(`executing: ${payload.data.metadata.function}`);
             let event = payload.data;
+            var context = {
+                event
+            };
             try {
                 //If filter has been specifed, and it evaluates to true, or hasn't been specified
-                if ((payload.data.metadata.filter && eval(payload.data.metadata.filter)) || !payload.data.metadata.filter) {
+                if ((payload.data.metadata.filter && safeEval(payload.data.metadata.filter, context)) || !payload.data.metadata.filter) {
                     let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                         method: 'post',
                         body: JSON.stringify(event),
