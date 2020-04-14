@@ -139,7 +139,7 @@ async function subscribe(eventService, topic, functions){
             };
             try {
                 //If filter has been specifed, and it evaluates to true, or hasn't been specified
-                if ((payload.data.metadata.filter && safeEval(payload.data.metadata.filter, context)) || !payload.data.metadata.filter) {
+                if (!payload.data.metadata.filter || safeEval(payload.data.metadata.filter, context)) {
                     let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                         method: 'post',
                         body: JSON.stringify(event),
