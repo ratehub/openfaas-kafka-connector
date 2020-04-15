@@ -3,6 +3,7 @@ const EventService  = require('./event.service');
 const fetch = require('node-fetch');
 const _ = require('lodash');
 const cron = require("node-cron");
+var safeEval = require('safe-eval')
 const dotenv = require('dotenv').config({path: __dirname + '/.env'});
 require('console-stamp')(console);
 
@@ -109,7 +110,7 @@ let includeTopics = [];
 })();
 
 function filter(functions, topic){
-  return _.filter(functions, o => o.annotations.topic ? o.annotations.topic.split(',').includes(topic) : false);
+    return _.filter(functions, o => o.annotations.topic ? o.annotations.topic.split(',').includes(topic) : false);
 }
 
 async function getTopics() {
@@ -132,19 +133,29 @@ async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
         `${topic}`, functions, concurrency, async (payload, done) => {
             console.log(`executing: ${payload.data.metadata.function}`);
+            let event = payload.data;
+            var context = {
+                event
+            };
             try {
-                let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
-                    method: 'post',
-                    body: JSON.stringify(payload.data),
-                    headers: {'Content-Type': 'application/json'},
-                    timeout: requestTimeout
-                });
-                if (functionResponse.ok) {
-                    console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
-                } else {
-                    console.error(`Error invoking function: ${payload.data.metadata.function}`);
-                    console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
-                    throw Error(JSON.stringify(await functionResponse.json()));
+                //If filter has been specifed, and it evaluates to true, or hasn't been specified
+                if (!payload.data.metadata.filter || safeEval(payload.data.metadata.filter, context)) {
+                    let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                        method: 'post',
+                        body: JSON.stringify(event),
+                        headers: {'Content-Type': 'application/json'},
+                        timeout: requestTimeout
+                    });
+                    if (functionResponse.ok) {
+                        console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+                    } else {
+                        console.error(`Error invoking function: ${payload.data.metadata.function}`);
+                        console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
+                        throw Error(JSON.stringify(await functionResponse.json()));
+                    }
+                }
+                else if (payload.data.metadata.filter) {
+                    console.log(`Ignored filtered event for function: ${payload.data.metadata.function}`);
                 }
             }catch (error) {
                 console.log(`Error: ${error}`);
