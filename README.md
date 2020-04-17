@@ -68,6 +68,12 @@ node.js project for event consuming and producing. (TBA for public npm package)
 ```
 If you do not include the "TOPICS" environment variable the connector will auto subscribe to topics 
 
+In addition, there is one more annotation, `filter`, which allows you to filter out only the events you want, or don't want, to execute your function on your selected topics. The filter is JavaScript code, executed as an eval, and if it returns true, the function will be executed, while if false, it will be ignored. Use the event object to get access to the full event payload (in the format described above) your function would be executed with. Below is an example:
+```
+filter: "event.content.hello !== 'world'"
+```
+In the example above, the function will only be executed if the event body (`event.content`) does not contain a property `hello` which is equal to the string “world”. If filter isn't used or is empty, all events will execute your function.
+
 ## Environment  settings
 ```
 CONNECTOR_NAME=faas-connector
