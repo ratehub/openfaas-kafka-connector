@@ -1,10 +1,11 @@
+const dotenv = require('dotenv').config({path: __dirname + '/.env'});
+const newrelic = require('newrelic');
 const fs = require('fs');
 const EventService  = require('./event.service');
 const fetch = require('node-fetch');
 const _ = require('lodash');
 const cron = require("node-cron");
-var safeEval = require('safe-eval')
-const dotenv = require('dotenv').config({path: __dirname + '/.env'});
+let safeEval = require('safe-eval');
 require('console-stamp')(console);
 
 const kafkaUri = process.env.KAFKA_CONNECTION;
@@ -94,10 +95,8 @@ let includeTopics = [];
                             await eventService.enableSubscription(eventService.subscriptions.get(topic));
                         }
                         eventService.subscriptions.get(topic).functions = filter(allFunctions, topic);
-                        //console.log(`Mapped topic: ${topic} to functions => {${eventService.subscriptions.get(topic).functions.map(f => f.name)}}` )
                     }
                 }
-                //console.log("****************************************************");
             });
         }
         else{
@@ -105,7 +104,8 @@ let includeTopics = [];
         }
     }
     catch(error){
-       console.error(error);
+        newrelic.noticeError(error);
+        console.error(error);
     }
 })();
 
@@ -134,7 +134,7 @@ async function subscribe(eventService, topic, functions){
         `${topic}`, functions, concurrency, async (payload, done) => {
             console.log(`executing: ${payload.data.metadata.function}`);
             let event = payload.data;
-            var context = {
+            let context = {
                 event
             };
             try {
@@ -159,6 +159,7 @@ async function subscribe(eventService, topic, functions){
                 }
             }catch (error) {
                 console.log(`Error: ${error}`);
+                newrelic.noticeError(error);
                 throw error;
             }finally {
                 console.log(`finished: ${payload.data.metadata.function}`);
