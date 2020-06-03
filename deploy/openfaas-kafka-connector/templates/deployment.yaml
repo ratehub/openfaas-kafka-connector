@@ -55,6 +55,12 @@ spec:
               value: {{ .Values.redis_port | quote }}
             - name: CONCURRENCY
               value: {{ .Values.concurrency | quote }}
+            - name: NEW_RELIC_LICENSE_KEY
+              value: '{{.Values.newRelicLicense}}'
+            - name: NEW_RELIC_APP_NAME
+              value: '{{.Values.newRelicAppName}}'
+            - name: NEW_RELIC_ENABLED
+              value: '{{.Values.newRelicEnable}}'
           volumeMounts:
             - name: auth
               readOnly: true
