@@ -4,6 +4,7 @@ const Queue = require('bee-queue');
 const Event = require('./event');
 const Subscription =  require("./subscription");
 const fs = require('fs');
+let safeEval = require('safe-eval');
 
 class EventService {
     /**
@@ -118,8 +119,16 @@ class EventService {
                 for(let f of subscription.functions){
                     event.metadata = {function: f.name };
                     if (typeof f.annotations.filter === "string") {
-                        event.metadata.filter = f.annotations.filter; 
+                        let context = {
+                            event
+                        };
+                        if (safeEval(f.annotations.filter, context) === false) {
+                            console.log(`Pre-filter not true, job not created for function: ${f.name}`);
+                            continue;
+                        }
+                        event.metadata.filter = f.annotations.filter;
                     }
+
                     const queue = this.queues.get(subscription.name);
                     let job = queue.createJob(event);
 
