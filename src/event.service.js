@@ -1,3 +1,4 @@
+const newrelic = require('newrelic');
 const { Kafka, logLevel } = require('kafkajs');
 const uuid = require('uuid');
 const Queue = require('bee-queue');
@@ -131,6 +132,7 @@ class EventService {
                         }catch(error){
                             console.error(`Job not created, error in pre-filter for function: ${f.name}`)
                             console.error(error);
+                            newrelic.noticeError(error);
                             continue;
                         }
 
