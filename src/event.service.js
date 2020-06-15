@@ -122,10 +122,18 @@ class EventService {
                         let context = {
                             event
                         };
-                        if (safeEval(f.annotations.filter, context) === false) {
-                            console.log(`Pre-filter not true, job not created for function: ${f.name}`);
+
+                        try {
+                            if (safeEval(f.annotations.filter, context) === false) {
+                                console.log(`Pre-filter not true, job not created for function: ${f.name}`);
+                                continue;
+                            }
+                        }catch(error){
+                            console.error(`Job not created, error in pre-filter for function: ${f.name}`)
+                            console.error(error);
                             continue;
                         }
+
                         event.metadata.filter = f.annotations.filter;
                     }
 
