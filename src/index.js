@@ -146,19 +146,24 @@ async function subscribe(eventService, topic, functions){
                         headers: {'Content-Type': 'application/json'},
                         timeout: requestTimeout
                     });
+
                     if (functionResponse.ok) {
                         console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
                     } else {
-                        console.error(`Error invoking function: ${payload.data.metadata.function}`);
-                        console.error(JSON.stringify(`status: ${functionResponse.statusText}`));
-                        throw Error(JSON.stringify(await functionResponse.json()));
+                        let response = {
+                            'function': payload.data.metadata.function,
+                            'status': functionResponse.status,
+                            'statusText': functionResponse.statusText,
+                            'body': await functionResponse.text()
+                        }
+                        throw Error(JSON.stringify(response));
                     }
                 }
                 else if (payload.data.metadata.filter) {
                     console.log(`Ignored filtered event for function: ${payload.data.metadata.function}`);
                 }
             }catch (error) {
-                console.log(`Error: ${error}`);
+                console.error(`${error}`);
                 newrelic.noticeError(error);
                 throw error;
             }finally {
