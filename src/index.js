@@ -163,7 +163,7 @@ async function subscribe(eventService, topic, functions){
                     console.log(`Ignored filtered event for function: ${payload.data.metadata.function}`);
                 }
             }catch (error) {
-                console.error(`${error}`);
+                console.error(error);
                 newrelic.noticeError(error);
                 throw error;
             }finally {
