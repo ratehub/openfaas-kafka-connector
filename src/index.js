@@ -164,7 +164,7 @@ async function subscribe(eventService, topic, functions){
                 }
             }catch (error) {
                 console.error(error);
-                newrelic.noticeError(error);
+                newrelic.noticeError(error, {function: payload.data.metadata.function, jobId: payload.id});
                 throw error;
             }finally {
                 console.log(`finished: ${payload.data.metadata.function}`);
