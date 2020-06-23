@@ -142,7 +142,7 @@ class EventService {
                     const queue = this.queues.get(subscription.name);
                     let job = queue.createJob(event);
 
-                    if (f.annotations.strategy === 'fixed' || f.strategy === 'exponential') {
+                    if (f.annotations.strategy === 'fixed' || f.annotations.strategy === 'exponential') {
                         if(!f.annotations.retryLatency){f.annotations.retryLatency = 1000 ;}
                         job.backoff(f.annotations.strategy, Number(f.annotations.retryLatency));
                         if(f.annotations.retries) {
