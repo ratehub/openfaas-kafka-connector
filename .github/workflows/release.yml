@@ -37,3 +37,4 @@ jobs:
         npx semantic-release --branches migrate-gh-actions --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/npm,@semantic-release/git --publish @semantic-release/github --tag-format='${version}'
 
 
+
