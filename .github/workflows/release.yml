@@ -4,7 +4,7 @@ name: Release
 on:
   push:
     branches:
-      - migrate-gh-actions
+      - master
     paths-ignore:
       - 'package.json'
       - 'package-lock.json'
@@ -34,7 +34,7 @@ jobs:
     - name: Install dependencies, run semantic-release
       run: |
         npm ci
-        npx semantic-release --branches migrate-gh-actions --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/npm,@semantic-release/git --publish @semantic-release/github --tag-format='${version}'
+        npx semantic-release --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/npm,@semantic-release/git --publish @semantic-release/github --tag-format='${version}'
 
 
 

@@ -38,6 +38,6 @@ jobs:
     - name: Push the Docker image
       run: docker push ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//}
     - name: Tag the docker image to latest tag
-      run: docker tag ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} ratehub/openfaas-kafka-connector:test
+      run: docker tag ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} ratehub/openfaas-kafka-connector:latest
     - name: Push the latest Docker image
-      run: docker push ratehub/openfaas-kafka-connector:test
+      run: docker push ratehub/openfaas-kafka-connector:latest
