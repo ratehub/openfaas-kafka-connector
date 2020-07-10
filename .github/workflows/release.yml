@@ -28,7 +28,6 @@ jobs:
         scope: '@ratehub'
     - name: Configure read only access to a private NPM registry
       run: |
-        echo always-auth=true > .npmrc
         echo //packagecloud.io/ratehub/npm/npm/:_authToken=${{ secrets.PACKAGECLOUD_TOKEN }} >> .npmrc
     - name: Install semantic-release
       run: npm install -g semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/npm @semantic-release/git @semantic-release/github

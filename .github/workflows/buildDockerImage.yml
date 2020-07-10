@@ -1,4 +1,4 @@
-name: Build Docker Image for conversion-enrichment service
+name: Build Docker Image for openfaas-kafka-connector
 
 on:
   push:
