@@ -1,0 +1,43 @@
+name: Build Docker Image for conversion-enrichment service
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: ssh setup
+      uses: webfactory/ssh-agent@v0.1.1
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Configure an NPM registry
+      env:
+        PACKAGECLOUD_TOKEN: $${{ secrets.PACKAGECLOUD_TOKEN }}
+      run: |
+        npm config set registry https://packagecloud.io/ratehub/npm/npm/
+        echo @ratehub:registry=https://packagecloud.io/ratehub/npm/npm/ > .npmrc
+        echo //packagecloud.io/ratehub/npm/npm/:_authToken=${{ secrets.PACKAGECLOUD_TOKEN}} >> .npmrc
+    - name: Login to Dockerhub Registry
+      run: echo "$DOCKERHUB_PASS" | docker login --username $DOCKERHUB_USER --password-stdin
+      env:
+        DOCKER_USER: ${{ secrets.DOCKERHUB_USER }}
+        DOCKER_PASS: ${{ secrets.DOCKERHUB_PASS }}
+    - name: Build the Docker image
+      run: |
+        docker build \
+        --file Dockerfile \
+        --tag ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} \
+        --build-arg VCS_REF=`git rev-parse --short HEAD` \
+        --build-arg VERSION=${GITHUB_REF/refs\/tags\//} \
+        --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+        .
+    - name: Push the Docker image
+      run: docker push ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//}
+    - name: Tag the docker image to latest tag
+      run: docker tag ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} ratehub/openfaas-kafka-connector:test
+    - name: Push the latest Docker image
+      run: docker push ratehub/openfaas-kafka-connector:test

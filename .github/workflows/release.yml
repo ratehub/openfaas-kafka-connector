@@ -1,0 +1,39 @@
+name: Release
+
+
+on:
+  push:
+    branches:
+      - migrate-gh-actions
+    paths-ignore:
+      - 'package.json'
+      - 'package-lock.json'
+
+env:
+  PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.PACTOKEN }}
+
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+        registry-url: 'https://packagecloud.io/ratehub/npm/npm/'
+        scope: '@ratehub'
+    - name: Configure read only access to a private NPM registry
+      run: |
+        echo always-auth=true > .npmrc
+        echo //packagecloud.io/ratehub/npm/npm/:_authToken=${{ secrets.PACKAGECLOUD_TOKEN }} >> .npmrc
+    - name: Install semantic-release
+      run: npm install -g semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/npm @semantic-release/git @semantic-release/github
+    - name: Install dependencies, run semantic-release
+      run: |
+        npm ci
+        npx semantic-release --branches migrate-gh-actions --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/npm,@semantic-release/git --publish @semantic-release/github --tag-format='${version}'
+
