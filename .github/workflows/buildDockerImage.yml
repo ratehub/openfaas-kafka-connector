@@ -24,8 +24,8 @@ jobs:
     - name: Login to Dockerhub Registry
       run: echo "$DOCKERHUB_PASS" | docker login --username $DOCKERHUB_USER --password-stdin
       env:
-        DOCKER_USER: ${{ secrets.DOCKERHUB_USER }}
-        DOCKER_PASS: ${{ secrets.DOCKERHUB_PASS }}
+        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+        DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
     - name: Build the Docker image
       run: |
         docker build \
