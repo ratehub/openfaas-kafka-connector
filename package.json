@@ -14,7 +14,7 @@
     "console-stamp": "^0.2.9",
     "dotenv": "^6.2.0",
     "kafkajs": "^1.7.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "newrelic": "^6.8.0",
     "node-cron": "^2.0.3",
     "node-fetch": "^2.6.0",
