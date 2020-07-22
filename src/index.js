@@ -8,6 +8,7 @@ const cron = require("node-cron");
 let safeEval = require('safe-eval');
 require('console-stamp')(console);
 
+const perFunctionQueue = process.env.CREATE_JOB_QUEUE_PER_FUNCTION === "true";
 const kafkaUri = process.env.KAFKA_CONNECTION;
 const https = process.env.GATEWAY_SSL === "true";
 const protocol = https ? "https" : "http";
@@ -56,7 +57,8 @@ let includeTopics = [];
                 key: key,
                 cert: cert
             },{ url: process.env.REDIS_CONNECTION, password: redisPassword,
-                port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL === 'true' }
+                port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL === 'true' },
+            perFunctionQueue
         );
 
         topics = process.env.TOPICS ? process.env.TOPICS.split(",") : await getTopics();

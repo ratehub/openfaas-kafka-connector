@@ -55,6 +55,8 @@ spec:
               value: {{ .Values.redis_port | quote }}
             - name: CONCURRENCY
               value: {{ .Values.concurrency | quote }}
+            - name: CREATE_JOB_QUEUE_PER_FUNCTION
+              value: {{ .Values.perFunctionJobQueue | quote }}
             - name: NEW_RELIC_LICENSE_KEY
               value: '{{.Values.newRelicLicense}}'
             - name: NEW_RELIC_APP_NAME
