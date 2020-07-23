@@ -118,6 +118,7 @@ class EventService {
         queue = new Queue(faasFunction.name, this.queueOptions);
         this.queues.set(faasFunction.name, queue);
         queue.process(subscription.concurrency, subscription.processor);
+        console.log(`Queue opened for function: ${faasFunction.name}`);
         return queue;
     }
 
@@ -130,7 +131,7 @@ class EventService {
                 if(event == null) { return }
                 console.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
-                    event.metadata = {function: f.name };
+                    event.metadata.function = f.name;
                     if (typeof f.annotations.filter === "string") {
                         let context = {
                             event
@@ -215,7 +216,7 @@ class EventService {
                 return null;
             }
             return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
-                message.content);
+                message.content, message.metadata);
         }catch(error){
             console.error(`Payload not in Json format: ${error}`);
             return null;

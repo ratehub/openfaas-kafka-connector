@@ -33,22 +33,28 @@ will receive a  payload in the schema of:
   type: 'event-type',
   occurredAt: 1570734688789000,
   content:{ 
-     property1: 'hello rates',
-     property2: 'can put any JSON payload in content that you want'
+     "property1": "hello rates",
+     "property2": "can put any JSON payload in content that you want"
   },
   metadata: { 
-    function: 'repeat' 
+    "version": "0.0.0",
+    "function": "repeat" 
   } 
 }
 ```
+If metadata object is not provided or not an object it will add a default metadata object with a property: `"version":"0.0.0"`
+
 In order for the kafka connector to deserialize the kafka payload, it must be in json format and
 the raw format must be (once published to kafka it will be transformed to the above format): 
 ```javascript
 {
   "type": "event-type",
   "content": {
-     property1: 'hello rates',
-     property2: 'can put any JSON payload in content that you want'
+     "property1": "hello rates",
+     "property2": "can put any JSON payload in content that you want"
+  },
+  metadata:{
+    "version":"0.0.0"
   }
 }
 ```

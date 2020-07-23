@@ -140,7 +140,10 @@ async function subscribe(eventService, topic, functions){
                 event
             };
             try {
-                //If filter has been specifed, and it evaluates to true, or hasn't been specified
+                //If filter has been specified, and it evaluates to true, or hasn't been specified
+                //[Tech debt]: this is redundant, but good for any delayed jobs that maybe created before version 1.3.9,
+                //or upgrading from a previous version of connector. Later versions will eval before creating a job,
+                //this will be deprecated in version 2
                 if (!payload.data.metadata.filter || safeEval(payload.data.metadata.filter, context)) {
                     let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                         method: 'post',
