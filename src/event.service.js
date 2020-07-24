@@ -180,7 +180,10 @@ class EventService {
                         }
                     }
 
-                    if(f.annotations.delay) {
+                    if(event.metadata.delay){
+                        job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
+                    }
+                    else if(f.annotations.delay) {
                         job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
                     }
 
