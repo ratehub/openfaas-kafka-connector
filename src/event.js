@@ -8,12 +8,17 @@ class Event{
      * @param {object} content - the payload of the event, can be any serializable object
      * @param {object} metadata - the meta data payload, can be any serializable object
      **/
-    constructor(sequenceNumber, type, occurredAt, content, metadata){
+    constructor(sequenceNumber, type, occurredAt, content, metadata) {
         this.sequenceNumber = sequenceNumber;
         this.type = type;
         this.occurredAt = occurredAt;
         this.content = content;
-        this.metadata = metadata;
+        if (metadata instanceof Object) {
+            this.metadata = metadata;
+        }else{
+            console.error(`Metadata not found on or not an object: ${type}`);
+            this.metadata = { "version" : "0.0.0" };
+        }
     }
 }
 

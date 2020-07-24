@@ -14,8 +14,9 @@ class EventService {
      * @param {string} serviceName - a unique name for the service, this will prefix all new subscriptions created.
      * @param {object} eventConnection - {url: string, user: string, password: string} object that contains required parameters for connecting to EventStore.org
      * @param {object} jobQueueConnection - {url: string, user: string, password: string} object that contains required parameters for connecting to Job Queue
+     * @param {boolean} perFunctionQueue - create job queue per function, this will increase the amount of redis connections
      */
-    constructor(serviceName, eventConnection, jobQueueConnection){
+    constructor(serviceName, eventConnection, jobQueueConnection,perFunctionQueue){
         this.eventConnection = eventConnection;
         this.jobQueueConnection = jobQueueConnection;
         this.serviceName = serviceName;
@@ -23,6 +24,7 @@ class EventService {
         this.queues = new Map();
         this.consumers = new Map();
         this.kafka = new Map();
+        this.perFunctionQueue = perFunctionQueue;
 
         this.queueOptions= {
             redis: {
@@ -109,6 +111,17 @@ class EventService {
         }
     }
 
+    _createOrGetFunctionQueue(faasFunction, subscription){
+        let queue = this.queues.get(faasFunction.name);
+        if(queue){ return queue; }
+
+        queue = new Queue(faasFunction.name, this.queueOptions);
+        this.queues.set(faasFunction.name, queue);
+        queue.process(subscription.concurrency, subscription.processor);
+        console.log(`Queue opened for function: ${faasFunction.name}`);
+        return queue;
+    }
+
     async _connectToSubscription(subscription){
         await this.consumers.get(subscription.stream).connect();
         await this.consumers.get(subscription.stream).subscribe({topic: subscription.stream});
@@ -118,7 +131,7 @@ class EventService {
                 if(event == null) { return }
                 console.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
-                    event.metadata = {function: f.name };
+                    event.metadata.function = f.name;
                     if (typeof f.annotations.filter === "string") {
                         let context = {
                             event
@@ -139,7 +152,24 @@ class EventService {
                         event.metadata.filter = f.annotations.filter;
                     }
 
-                    const queue = this.queues.get(subscription.name);
+                    let queue = null;
+                    let queueName = null;
+
+                    if(this.perFunctionQueue){
+                        queue = this._createOrGetFunctionQueue(f,subscription);
+                        queueName = f.name;
+                    }
+                    else{
+                        queue = this.queues.get(subscription.name);
+                        queueName = subscription.name;
+                    }
+
+                    if(!queue){
+                        console.error(`Queue not found: ${queueName}`);
+                        newrelic.noticeError(new Error(`Queue not found: ${queueName}`));
+                        continue;
+                    }
+
                     let job = queue.createJob(event);
 
                     if (f.annotations.strategy === 'fixed' || f.annotations.strategy === 'exponential') {
@@ -186,7 +216,7 @@ class EventService {
                 return null;
             }
             return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
-                message.content);
+                message.content, message.metadata);
         }catch(error){
             console.error(`Payload not in Json format: ${error}`);
             return null;

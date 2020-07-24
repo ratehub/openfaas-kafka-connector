@@ -8,6 +8,7 @@ const cron = require("node-cron");
 let safeEval = require('safe-eval');
 require('console-stamp')(console);
 
+const perFunctionQueue = process.env.CREATE_JOB_QUEUE_PER_FUNCTION === "true";
 const kafkaUri = process.env.KAFKA_CONNECTION;
 const https = process.env.GATEWAY_SSL === "true";
 const protocol = https ? "https" : "http";
@@ -56,7 +57,8 @@ let includeTopics = [];
                 key: key,
                 cert: cert
             },{ url: process.env.REDIS_CONNECTION, password: redisPassword,
-                port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL === 'true' }
+                port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL === 'true' },
+            perFunctionQueue
         );
 
         topics = process.env.TOPICS ? process.env.TOPICS.split(",") : await getTopics();
@@ -138,7 +140,10 @@ async function subscribe(eventService, topic, functions){
                 event
             };
             try {
-                //If filter has been specifed, and it evaluates to true, or hasn't been specified
+                //If filter has been specified, and it evaluates to true, or hasn't been specified
+                //[Tech debt]: this is redundant, but good for any delayed jobs that maybe created before version 1.3.9,
+                //or upgrading from a previous version of connector. Later versions will eval before creating a job,
+                //this will be deprecated in version 2
                 if (!payload.data.metadata.filter || safeEval(payload.data.metadata.filter, context)) {
                     let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
                         method: 'post',
