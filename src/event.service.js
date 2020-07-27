@@ -6,6 +6,7 @@ const Event = require('./event');
 const Subscription =  require("./subscription");
 const fs = require('fs');
 let safeEval = require('safe-eval');
+const _ = require('lodash');
 
 class EventService {
     /**
@@ -122,6 +123,10 @@ class EventService {
         return queue;
     }
 
+    _getFunctionDelay(functionName, delays){
+        return _.find(delays, {name: functionName});
+    }
+
     async _connectToSubscription(subscription){
         await this.consumers.get(subscription.stream).connect();
         await this.consumers.get(subscription.stream).subscribe({topic: subscription.stream});
@@ -132,6 +137,7 @@ class EventService {
                 console.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
                     event.metadata.function = f.name;
+
                     if (typeof f.annotations.filter === "string") {
                         let context = {
                             event
@@ -180,10 +186,17 @@ class EventService {
                         }
                     }
 
-                    if(event.metadata.delay){
-                        job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
+                    if(Array.isArray(event.metadata.delayFunctions)){
+                        const delayedFunction = this._getFunctionDelay(event.metadata.function,
+                            event.metadata.delayFunctions);
+
+                        if(delayedFunction && Number.isInteger(delayedFunction.delay)) {
+                            job.delayUntil(new Date(Date.now() + Number(delayedFunction.delay)));
+                        }else if(Number.isInteger(f.annotations.delay)) {
+                            job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
+                        }
                     }
-                    else if(f.annotations.delay) {
+                    else if(Number.isInteger(f.annotations.delay)) {
                         job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
                     }
 
