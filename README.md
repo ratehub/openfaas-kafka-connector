@@ -55,16 +55,7 @@ the raw format must be (once published to kafka it will be transformed to the ab
   },
   metadata:{
     "version":"0.0.0",
-    "delayFunctions":[
-        {
-            "name": "repeat",
-            "delay": 5000 
-        },
-        {
-            "name": "defacto",
-            "delay": 4000
-        }          
-    ]   
+    "delay": 1000
   }
 }
 ```
