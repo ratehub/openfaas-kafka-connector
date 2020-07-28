@@ -180,7 +180,11 @@ class EventService {
                         }
                     }
 
-                    if(f.annotations.delay) {
+                    if(Number.isInteger(event.metadata.delay)){
+                        console.info(`Using delay found in metadata for event: ${event.type} on function: ${f.name}`);
+                        job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
+                    }else if(Number.isInteger(f.annotations.delay)) {
+                        console.info(`Using delay found in annotation for event: ${event.type} on function: ${f.name}`);
                         job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
                     }
 

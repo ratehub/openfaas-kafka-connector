@@ -54,7 +54,8 @@ the raw format must be (once published to kafka it will be transformed to the ab
      "property2": "can put any JSON payload in content that you want"
   },
   metadata:{
-    "version":"0.0.0"
+    "version":"0.0.0",
+    "delay": 1000
   }
 }
 ```
