@@ -180,10 +180,11 @@ class EventService {
                         }
                     }
 
-                    if(Number.isInteger(event.metadata.delay)){
+                    //annotations can be string or number
+                    if(event.metadata.delay && !isNaN(event.metadata.delay)){
                         console.info(`Using delay found in metadata for event: ${event.type} on function: ${f.name}`);
                         job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
-                    }else if(Number.isInteger(f.annotations.delay)) {
+                    }else if(f.annotations.delay && !isNaN(f.annotations.delay)) {
                         console.info(`Using delay found in annotation for event: ${event.type} on function: ${f.name}`);
                         job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
                     }
