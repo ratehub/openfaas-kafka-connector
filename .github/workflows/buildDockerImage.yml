@@ -30,14 +30,14 @@ jobs:
       run: |
         docker build \
         --file Dockerfile \
-        --tag ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} \
+        --tag gcr.io/platform-235214/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} \
         --build-arg VCS_REF=`git rev-parse --short HEAD` \
         --build-arg VERSION=${GITHUB_REF/refs\/tags\//} \
         --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
         .
     - name: Push the Docker image
-      run: docker push ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//}
+      run: docker push gcr.io/platform-235214/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//}
     - name: Tag the docker image to latest tag
-      run: docker tag ratehub/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} ratehub/openfaas-kafka-connector:latest
+      run: docker tag gcr.io/platform-235214/openfaas-kafka-connector:${GITHUB_REF/refs\/tags\//} gcr.io/platform-235214/openfaas-kafka-connector:latest
     - name: Push the latest Docker image
-      run: docker push ratehub/openfaas-kafka-connector:latest
+      run: docker push gcr.io/platform-235214/openfaas-kafka-connector:latest
