@@ -32,6 +32,8 @@ jobs:
     - name: Install semantic-release
       run: npm install -g semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/npm @semantic-release/git @semantic-release/github
     - name: Install dependencies, run semantic-release
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_READ }}
       run: |
         npm ci
         npx semantic-release --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/npm,@semantic-release/git --publish @semantic-release/github --tag-format='${version}'
