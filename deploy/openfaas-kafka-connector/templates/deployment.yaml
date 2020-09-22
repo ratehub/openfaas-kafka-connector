@@ -25,6 +25,8 @@ spec:
         - name: connector
           secret:
             secretName: openfaas-connector
+      imagePullSecrets:
+        - name: '{{.Values.imagePullSecrets}}'
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image }}"

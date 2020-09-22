@@ -4,7 +4,8 @@
 
 replicaCount: 1
 
-image: ratehub/openfaas-kafka-connector:latest
+image: gcr.io/platform-235214/openfaas-kafka-connector:1.4.2
+imagePullSecrets: gcr-pull-secret
 connector_name: openfaas-kafka-connector
 gateway_uri: gateway:8080
 gateway_ssl: false
