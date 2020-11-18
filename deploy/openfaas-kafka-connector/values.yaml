@@ -4,7 +4,7 @@
 
 replicaCount: 1
 
-image: gcr.io/platform-235214/openfaas-kafka-connector:1.4.2
+image: gcr.io/platform-235214/openfaas-kafka-connector:1.4.6
 imagePullSecrets: gcr-pull-secret
 connector_name: openfaas-kafka-connector
 gateway_uri: gateway:8080
