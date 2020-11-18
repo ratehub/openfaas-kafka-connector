@@ -5,6 +5,12 @@ on:
     tags:
       - '*'
 
+
+env:
+  DOCKER_USERNAME: _json_key
+  DOCKER_PASSWORD: ${{ secrets.GCP_SA_KEY_JSON }}
+  DOCKER_REGISTRY_URL: https://gcr.io
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,10 +28,7 @@ jobs:
         echo @ratehub:registry=https://packagecloud.io/ratehub/npm/npm/ > .npmrc
         echo //packagecloud.io/ratehub/npm/npm/:_authToken=${{ secrets.PACKAGECLOUD_TOKEN}} >> .npmrc
     - name: Login to Dockerhub Registry
-      run: echo "$DOCKERHUB_PASS" | docker login --username $DOCKERHUB_USER --password-stdin
-      env:
-        DOCKERHUB_USER: "_json_key"
-        DOCKERHUB_PASS: ${{ secrets.GCP_SA_KEY_JSON }}
+      run: docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}" "${DOCKER_REGISTRY_URL}"
     - name: Build the Docker image
       run: |
         docker build \
