@@ -123,7 +123,7 @@ async function getTopics() {
     let normalizedTopics = [];
     for(let topic of rawTopics){
         if(topic) {
-            for(let t of topic.split(',')) {
+            for(let t of topic.replace(/\s/g, '').split(',')) {
                 normalizedTopics.push(t);
             }
         }
