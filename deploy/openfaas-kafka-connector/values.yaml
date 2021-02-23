@@ -21,6 +21,7 @@ perFunctionJobQueue: false
 newRelicLicense: license_key_here
 newRelicAppName: openfaas-kafka-connector
 newRelicEnable: false
+linkerd: disabled
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

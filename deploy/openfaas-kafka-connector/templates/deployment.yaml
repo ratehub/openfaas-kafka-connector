@@ -14,6 +14,8 @@ spec:
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
+      annotations:
+        linkerd.io/inject: '{{.Values.linkerd }}'
       labels:
         app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
