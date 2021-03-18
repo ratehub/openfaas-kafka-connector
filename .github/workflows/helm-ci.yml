@@ -1,0 +1,47 @@
+name: "Helm chart CI"
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  HELM_CHART_PATH: './deploy/openfaas-kafka-connector'
+  HELM_CHART_REPO_NAME: 'ratehub'
+  HELM_CHART_REPO_URL: 'cm://helm.ratehub.dev'
+
+jobs:
+  helm:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: 'Checkout codebase'
+        uses: actions/checkout@v2
+
+      - name: 'Setup helm'
+        id: install
+        uses: azure/setup-helm@v1
+        with:
+          version: 'v3.5.2'
+
+      - name: Lint helm chart
+        run: |
+          helm lint "${HELM_CHART_PATH}"
+
+      - name: Install helm push
+        run: |
+          helm plugin install https://github.com/chartmuseum/helm-push
+
+      - name: Add helm.ratehub.dev
+        env:
+          HELM_REPO_USERNAME: ${{ secrets.RATEHUB_HELM_USER }}
+          HELM_REPO_PASSWORD: ${{ secrets.RATEHUB_HELM_PASS }}
+        run: |
+          helm repo add "${HELM_CHART_REPO_NAME}" "${HELM_CHART_REPO_URL}"
+
+      - name: Publish helm chart
+        if: github.ref == 'refs/heads/master'
+        env:
+          HELM_REPO_USERNAME: ${{ secrets.RATEHUB_HELM_USER }}
+          HELM_REPO_PASSWORD: ${{ secrets.RATEHUB_HELM_PASS }}
+        run: |
+          helm push "${HELM_CHART_PATH}" "${HELM_CHART_REPO_NAME}"
