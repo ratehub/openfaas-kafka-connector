@@ -41,7 +41,6 @@ kafkaConnectorSecrets:
     kafka-ssl-key: '' # cat key.pem | base64
     redis-pass: ''
 
-
 basicAuthSecrets:
   existingSecrets: true
   nameOverride: ''

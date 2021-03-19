@@ -32,39 +32,39 @@ spec:
         - name: {{ .Chart.Name }}
           env:
             - name: CONNECTOR_NAME
-              value: {{ .Values.connector_name | quote }}
+              value: {{ .Values.settings.connector_name | quote }}
             - name: GATEWAY_URI
-              value: {{ .Values.gateway_uri | quote }}
+              value: {{ .Values.settings.gateway_uri | quote }}
             - name: GATEWAY_SSL
-              value: {{ .Values.gateway_ssl | quote  }}
-              {{- if .Values.topics }}
+              value: {{ .Values.settings.gateway_ssl | quote  }}
+              {{- if .Values.settings.topics }}
             - name: TOPICS
-              value: {{ .Values.topics | quote }}
+              value: {{ .Values.settings.topics | quote }}
               {{- end }}
-              {{- if .Values.excludeTopics }}
+              {{- if .Values.settings.excludeTopics }}
             - name: EXCLUDE_TOPICS
-              value: {{ .Values.excludeTopics | quote }}
+              value: {{ .Values.settings.excludeTopics | quote }}
               {{- end }}
             - name: KAFKA_CONNECTION
-              value: {{ .Values.kafka_connection | quote }}
+              value: {{ .Values.settings.kafka_connection | quote }}
             - name: KAFKA_SSL
-              value: {{ .Values.kafka_ssl | quote }}
+              value: {{ .Values.settings.kafka_ssl | quote }}
             - name: REDIS_CONNECTION
-              value: {{ .Values.redis_connection | quote }}
+              value: {{ .Values.settings.redis_connection | quote }}
             - name: REDIS_SSL
-              value: {{ .Values.redis_ssl | quote }}
+              value: {{ .Values.settings.redis_ssl | quote }}
             - name: REDIS_PORT
-              value: {{ .Values.redis_port | quote }}
+              value: {{ .Values.settings.redis_port | quote }}
             - name: CONCURRENCY
-              value: {{ .Values.concurrency | quote }}
+              value: {{ .Values.settings.concurrency | quote }}
             - name: CREATE_JOB_QUEUE_PER_FUNCTION
-              value: {{ .Values.perFunctionJobQueue | quote }}
+              value: {{ .Values.settings.perFunctionJobQueue | quote }}
             - name: NEW_RELIC_LICENSE_KEY
-              value: '{{.Values.newRelicLicense}}'
+              value: '{{.Values.settings.newRelicLicense}}'
             - name: NEW_RELIC_APP_NAME
-              value: '{{.Values.newRelicAppName}}'
+              value: '{{.Values.settings.newRelicAppName}}'
             - name: NEW_RELIC_ENABLED
-              value: '{{.Values.newRelicEnable}}'
+              value: '{{.Values.settings.newRelicEnable}}'
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
