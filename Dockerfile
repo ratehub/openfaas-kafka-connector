@@ -10,12 +10,10 @@ LABEL org.label-schema.name="openfaas-kafka-connector"\
 WORKDIR /usr/src/app
 COPY ./ ./
 
-RUN apk add --update \
+RUN apk add --update --no-cache \
    curl \
-   bash \
- && rm -rf /var/cache/apk/*
+   bash
 
-RUN npm install && npm cache clean --force
-COPY . .
+RUN npm ci && npm cache clean --force
 
 CMD [ "npm", "start" ]

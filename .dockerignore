@@ -1,0 +1,8 @@
+# exclude directories not needed for the container runtime:
+deploy
+.github
+# Files used for git or docker but not part of the container runtime:
+.gitignore
+.git
+.dockerignore
+Dockerfile*
