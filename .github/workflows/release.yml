@@ -8,6 +8,8 @@ on:
     paths-ignore:
       - 'package.json'
       - 'package-lock.json'
+      - 'deploy/**'
+      - '.github/workflows/**'
 
 env:
   PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}

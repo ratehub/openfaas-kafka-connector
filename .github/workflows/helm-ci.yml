@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    paths:
+      - "deploy/openfaas-kafka-connector/**"
 
 env:
   HELM_CHART_PATH: './deploy/openfaas-kafka-connector'
