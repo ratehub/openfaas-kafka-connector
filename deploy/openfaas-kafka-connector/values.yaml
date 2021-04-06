@@ -28,9 +28,9 @@ settings:
   redis_port: 6379
   concurrency: 4
   perFunctionJobQueue: false
-  newRelicLicense: license_key_here
+  newRelicLicense: vault:secret/data/common/new_relic#NEW_RELIC_LICENSE_KEY # The Vault secret-path for VSWH
   newRelicAppName: '[dev] openfaas-kafka-connector'
-  newRelicEnable: false
+  newRelicEnable: true
 
 kafkaConnectorSecrets:
   existingSecrets: true

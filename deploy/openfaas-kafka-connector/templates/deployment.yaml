@@ -65,6 +65,8 @@ spec:
               value: '{{.Values.settings.newRelicAppName}}'
             - name: NEW_RELIC_ENABLED
               value: '{{.Values.settings.newRelicEnable}}'
+            - name: NEW_RELIC_LOG
+              value: /var/log/newrelic/agent.log
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -78,6 +80,9 @@ spec:
             - mountPath: /var/connector-secrets
               name: connector
               readOnly: true
+            - mountPath: /var/log/newrelic
+              name: newrelic-logs
+              readOnly: false
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -99,3 +104,5 @@ spec:
           secret:
             defaultMode: 420
             secretName: {{ include "openfaas-kafka-connector.app-secrets-name" . | quote }}
+        - name: newrelic-logs
+          emptyDir: {}

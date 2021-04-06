@@ -1,6 +1,6 @@
 # openfaas-kafka-connector
 
-![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.4.6](https://img.shields.io/badge/AppVersion-1.4.6-informational?style=flat-square)
+![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.4.6](https://img.shields.io/badge/AppVersion-1.4.6-informational?style=flat-square)
 
 A Helm chart for ratehub's openfaas kafka connector
 
@@ -49,7 +49,7 @@ A Helm chart for ratehub's openfaas kafka connector
 | settings.kafka_ssl | bool | `false` |  |
 | settings.newRelicAppName | string | `"[dev] openfaas-kafka-connector"` |  |
 | settings.newRelicEnable | bool | `false` |  |
-| settings.newRelicLicense | string | `"license_key_here"` |  |
+| settings.newRelicLicense | string | `"vault:secret/data/common/new_relic#NEW_RELIC_LICENSE_KEY"` |  |
 | settings.perFunctionJobQueue | bool | `false` |  |
 | settings.redis_connection | string | `"127.0.0.1"` |  |
 | settings.redis_port | int | `6379` |  |
