@@ -3,88 +3,99 @@ kind: Deployment
 metadata:
   name: {{ include "openfaas-kafka-connector.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- include "openfaas-kafka-connector.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- include "openfaas-kafka-connector.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
-        linkerd.io/inject: '{{.Values.linkerd }}'
+      {{- include "openfaas-kafka-connector.linkerdAnnotations" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        app.kubernetes.io/name: {{ include "openfaas-kafka-connector.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- include "openfaas-kafka-connector.selectorLabels" . | nindent 8 }}
     spec:
-      volumes:
-        - name: auth
-          secret:
-            secretName: basic-auth
-        - name: connector
-          secret:
-            secretName: openfaas-connector
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        - name: '{{.Values.imagePullSecrets}}'
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "openfaas-kafka-connector.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image }}"
           env:
             - name: CONNECTOR_NAME
-              value: {{ .Values.connector_name | quote }}
+              value: {{ .Values.settings.connector_name | quote }}
             - name: GATEWAY_URI
-              value: {{ .Values.gateway_uri | quote }}
+              value: {{ .Values.settings.gateway_uri | quote }}
             - name: GATEWAY_SSL
-              value: {{ .Values.gateway_ssl | quote  }}
-              {{ if .Values.topics }}
+              value: {{ .Values.settings.gateway_ssl | quote  }}
+              {{- if .Values.settings.topics }}
             - name: TOPICS
-              value: {{ .Values.topics | quote }}
-              {{ end }}
-              {{ if .Values.excludeTopics }}
+              value: {{ .Values.settings.topics | quote }}
+              {{- end }}
+              {{- if .Values.settings.excludeTopics }}
             - name: EXCLUDE_TOPICS
-              value: {{ .Values.excludeTopics | quote }}
-              {{ end }}
+              value: {{ .Values.settings.excludeTopics | quote }}
+              {{- end }}
             - name: KAFKA_CONNECTION
-              value: {{ .Values.kafka_connection | quote }}
+              value: {{ .Values.settings.kafka_connection | quote }}
             - name: KAFKA_SSL
-              value: {{ .Values.kafka_ssl | quote }}
+              value: {{ .Values.settings.kafka_ssl | quote }}
             - name: REDIS_CONNECTION
-              value: {{ .Values.redis_connection | quote }}
+              value: {{ .Values.settings.redis_connection | quote }}
             - name: REDIS_SSL
-              value: {{ .Values.redis_ssl | quote }}
+              value: {{ .Values.settings.redis_ssl | quote }}
             - name: REDIS_PORT
-              value: {{ .Values.redis_port | quote }}
+              value: {{ .Values.settings.redis_port | quote }}
             - name: CONCURRENCY
-              value: {{ .Values.concurrency | quote }}
+              value: {{ .Values.settings.concurrency | quote }}
             - name: CREATE_JOB_QUEUE_PER_FUNCTION
-              value: {{ .Values.perFunctionJobQueue | quote }}
+              value: {{ .Values.settings.perFunctionJobQueue | quote }}
             - name: NEW_RELIC_LICENSE_KEY
-              value: '{{.Values.newRelicLicense}}'
+              value: '{{.Values.settings.newRelicLicense}}'
             - name: NEW_RELIC_APP_NAME
-              value: '{{.Values.newRelicAppName}}'
+              value: '{{.Values.settings.newRelicAppName}}'
             - name: NEW_RELIC_ENABLED
-              value: '{{.Values.newRelicEnable}}'
-          volumeMounts:
-            - name: auth
-              readOnly: true
-              mountPath: "/var/secrets"
-            - name: connector
-              readOnly: true
-              mountPath: "/var/connector-secrets"
+              value: '{{.Values.settings.newRelicEnable}}'
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /var/secrets
+              name: auth
+              readOnly: true
+            - mountPath: /var/connector-secrets
+              name: connector
+              readOnly: true
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-    {{- with .Values.affinity }}
+      {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
+      volumes:
+        - name: auth
+          secret:
+            defaultMode: 420
+            secretName: {{ include "openfaas-kafka-connector.basic-auth-secrets-name" . | quote }}
+        - name: connector
+          secret:
+            defaultMode: 420
+            secretName: {{ include "openfaas-kafka-connector.app-secrets-name" . | quote }}

@@ -4,24 +4,81 @@
 
 replicaCount: 1
 
-image: gcr.io/platform-235214/openfaas-kafka-connector:1.4.6
-imagePullSecrets: gcr-pull-secret
-connector_name: openfaas-kafka-connector
-gateway_uri: gateway:8080
-gateway_ssl: false
-#topics: test-stream-1
-#excludeTopics: test-stream-1
-kafka_connection: 127.0.0.1:9092
-kafka_ssl: false
-redis_connection: 127.0.0.1
-redis_ssl: false
-redis_port: 6379
-concurrency: 4
-perFunctionJobQueue: false
-newRelicLicense: license_key_here
-newRelicAppName: openfaas-kafka-connector
-newRelicEnable: false
-linkerd: disabled
+image:
+  repository: gcr.io/platform-235214/openfaas-kafka-connector
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets:
+  - name: gcr-pull-secret
+nameOverride: ""
+fullnameOverride: ""
+
+settings:
+  connector_name: openfaas-kafka-connector
+  gateway_uri: gateway:8080
+  gateway_ssl: false
+  #topics: test-stream-1
+  #excludeTopics: test-stream-1
+  kafka_connection: 127.0.0.1:9092
+  kafka_ssl: false
+  redis_connection: 127.0.0.1
+  redis_ssl: false
+  redis_port: 6379
+  concurrency: 4
+  perFunctionJobQueue: false
+  newRelicLicense: license_key_here
+  newRelicAppName: '[dev] openfaas-kafka-connector'
+  newRelicEnable: false
+
+kafkaConnectorSecrets:
+  existingSecrets: true
+  nameOverride: ''
+  values: # The Cert and Key files must be base64 encoded already.
+    kafka-ssl-ca: '' # cat ca.pem | base64
+    kafka-ssl-cert: '' # cat ca.crt | base64
+    kafka-ssl-key: '' # cat key.pem | base64
+    redis-pass: ''
+
+basicAuthSecrets:
+  existingSecrets: true
+  nameOverride: ''
+  values:
+    basic-auth-password: ''
+    basic-auth-user: ''
+
+linkerd:
+  enabled: true
+
+## The ServiceAccount is used for Vault integration.
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+  # vault.security.banzaicloud.io/vault-addr: "https://vault.default.svc.cluster.local.:8200"
+  # vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+  # vault.security.banzaicloud.io/vault-path: kubernetes
+  # vault.security.banzaicloud.io/vault-role: 
+  # vault.security.banzaicloud.io/vault-skip-verify: "true" # Container is missing Trusted Mozilla roots too.
+
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  # capabilities:
+  #   drop:
+  #   - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -34,6 +91,13 @@ resources: {}
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 

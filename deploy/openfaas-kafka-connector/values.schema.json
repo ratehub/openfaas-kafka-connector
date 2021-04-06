@@ -1,0 +1,210 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "affinity": {
+            "type": "object"
+        },
+        "autoscaling": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "maxReplicas": {
+                    "type": "integer"
+                },
+                "minReplicas": {
+                    "type": "integer"
+                },
+                "targetCPUUtilizationPercentage": {
+                    "type": "integer"
+                }
+            }
+        },
+        "basicAuthSecrets": {
+            "type": "object",
+            "properties": {
+                "existingSecrets": {
+                    "type": "boolean"
+                },
+                "nameOverride": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "object",
+                    "properties": {
+                        "basic-auth-password": {
+                            "type": "string"
+                        },
+                        "basic-auth-user": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "fullnameOverride": {
+            "type": "string"
+        },
+        "image": {
+            "type": "object",
+            "properties": {
+                "pullPolicy": {
+                    "type": "string"
+                },
+                "repository": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
+                }
+            }
+        },
+        "imagePullSecrets": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "kafkaConnectorSecrets": {
+            "type": "object",
+            "properties": {
+                "existingSecrets": {
+                    "type": "boolean"
+                },
+                "nameOverride": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "object",
+                    "properties": {
+                        "kafka-ssl-ca": {
+                            "type": "string"
+                        },
+                        "kafka-ssl-cert": {
+                            "type": "string"
+                        },
+                        "kafka-ssl-key": {
+                            "type": "string"
+                        },
+                        "redis-pass": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "linkerd": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "nameOverride": {
+            "type": "string"
+        },
+        "nodeSelector": {
+            "type": "object"
+        },
+        "podAnnotations": {
+            "type": "object"
+        },
+        "podSecurityContext": {
+            "type": "object",
+            "properties": {
+                "fsGroup": {
+                    "type": "integer"
+                }
+            }
+        },
+        "replicaCount": {
+            "type": "integer"
+        },
+        "resources": {
+            "type": "object"
+        },
+        "securityContext": {
+            "type": "object",
+            "properties": {
+                "readOnlyRootFilesystem": {
+                    "type": "boolean"
+                },
+                "runAsNonRoot": {
+                    "type": "boolean"
+                },
+                "runAsUser": {
+                    "type": "integer"
+                }
+            }
+        },
+        "serviceAccount": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "object"
+                },
+                "create": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "settings": {
+            "type": "object",
+            "properties": {
+                "concurrency": {
+                    "type": "integer"
+                },
+                "connector_name": {
+                    "type": "string"
+                },
+                "gateway_ssl": {
+                    "type": "boolean"
+                },
+                "gateway_uri": {
+                    "type": "string"
+                },
+                "kafka_connection": {
+                    "type": "string"
+                },
+                "kafka_ssl": {
+                    "type": "boolean"
+                },
+                "newRelicAppName": {
+                    "type": "string"
+                },
+                "newRelicEnable": {
+                    "type": "boolean"
+                },
+                "newRelicLicense": {
+                    "type": "string"
+                },
+                "perFunctionJobQueue": {
+                    "type": "boolean"
+                },
+                "redis_connection": {
+                    "type": "string"
+                },
+                "redis_port": {
+                    "type": "integer"
+                },
+                "redis_ssl": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "tolerations": {
+            "type": "array"
+        }
+    }
+}
