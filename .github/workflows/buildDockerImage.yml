@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - 'deploy/**'
       - '.github/workflows/**'
+  workflow_dispatch:
 
 env:
   DOCKER_USERNAME: _json_key
