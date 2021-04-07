@@ -10,6 +10,38 @@
   },
   "author": "",
   "license": "ISC",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/npm",
+    "@semantic-release/git"
+  ],
+  "release": {
+    "branches": [
+      "master"
+    ],
+    "publish": [
+      "@semantic-release/github"
+    ],
+    "prepare": [
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": false
+        }
+      ],
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "package.json",
+            "package-lock.json"
+          ],
+          "message": "chore(release): ${nextRelease.version} \n\n${nextRelease.notes}"
+        }
+      ]
+    ]
+  },
   "dependencies": {
     "bee-queue": "^1.2.3",
     "console-stamp": "^0.2.9",
