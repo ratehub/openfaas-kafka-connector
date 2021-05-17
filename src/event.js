@@ -16,7 +16,6 @@ class Event{
         if (metadata instanceof Object) {
             this.metadata = metadata;
         }else{
-            console.error(`Metadata not found on or not an object: ${type}`);
             this.metadata = { "version" : "0.0.0" };
         }
     }
