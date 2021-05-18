@@ -6,7 +6,9 @@ const fetch = require('node-fetch');
 const _ = require('lodash');
 const cron = require("node-cron");
 let safeEval = require('safe-eval');
-require('console-stamp')(console);
+const { format, createLogger, transports } = require('winston');
+const { combine, timestamp, simple, json } = format;
+
 
 const perFunctionQueue = process.env.CREATE_JOB_QUEUE_PER_FUNCTION === "true";
 const kafkaUri = process.env.KAFKA_CONNECTION;
@@ -40,6 +42,13 @@ if(fs.existsSync('/var/connector-secrets')){
     }
 }
 
+const logger = createLogger({
+    format: combine(timestamp(), simple(), json()),
+    transports: [
+        new transports.Console(),
+    ],
+});
+
 const faas = `${protocol}://${gatewayUser}:${gatewayPass}@${process.env.GATEWAY_URI}`;
 let topics = null;
 let excludeTopics = [];
@@ -58,7 +67,7 @@ let includeTopics = [];
                 cert: cert
             },{ url: process.env.REDIS_CONNECTION, password: redisPassword,
                 port: process.env.REDIS_PORT, tls: process.env.REDIS_SSL === 'true' },
-            perFunctionQueue
+            perFunctionQueue, logger
         );
 
         topics = process.env.TOPICS ? process.env.TOPICS.split(",") : await getTopics();
@@ -77,8 +86,8 @@ let includeTopics = [];
             }
 
             await eventService.start();
-            console.log(`listening to topics: ${includeTopics}`);
-            console.log(`excluding topics: ${excludeTopics}`);
+            logger.info(`listening to topics: ${includeTopics}`);
+            logger.info(`excluding topics: ${excludeTopics}`);
 
             cron.schedule("*/3 * * * * *", async function() {
                 if(!process.env.TOPICS){
@@ -92,7 +101,7 @@ let includeTopics = [];
                     if(!excludeTopics.includes(topic)) {
                         let subscription = eventService.subscriptions.get(topic);
                         if (!subscription) {
-                            console.log('Mapped new topic: ${topic}');
+                            logger.info('Mapped new topic: ${topic}');
                             await subscribe(eventService, topic, []);
                             await eventService.enableSubscription(eventService.subscriptions.get(topic));
                         }
@@ -102,12 +111,12 @@ let includeTopics = [];
             });
         }
         else{
-            console.error("No topics have been defined, please set env setting TOPICS with a comma delimited string or annotate functions with topic")
+            logger.error("No topics have been defined, please set env setting TOPICS with a comma delimited string or annotate functions with topic")
         }
     }
     catch(error){
         newrelic.noticeError(error);
-        console.error(error);
+        logger.error(error);
     }
 })();
 
@@ -134,7 +143,6 @@ async function getTopics() {
 async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
         `${topic}`, functions, concurrency, async (payload, done) => {
-            console.log(`executing: ${payload.data.metadata.function}`);
             let event = payload.data;
             let context = {
                 event
@@ -153,7 +161,7 @@ async function subscribe(eventService, topic, functions){
                     });
 
                     if (functionResponse.ok) {
-                        console.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+                        logger.log(`Successfully invoked function: ${payload.data.metadata.function}`)
                     } else {
                         let response = {
                             'function': payload.data.metadata.function,
@@ -165,14 +173,12 @@ async function subscribe(eventService, topic, functions){
                     }
                 }
                 else if (payload.data.metadata.filter) {
-                    console.log(`Ignored filtered event for function: ${payload.data.metadata.function}`);
+                    logger.log(`Ignored filtered event for function: ${payload.data.metadata.function}`);
                 }
             }catch (error) {
-                console.error(error);
+                logger.error(error);
                 newrelic.noticeError(error, {function: payload.data.metadata.function, jobId: payload.id});
                 throw error;
-            }finally {
-                console.log(`finished: ${payload.data.metadata.function}`);
             }
     });
 }

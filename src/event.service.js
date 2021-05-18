@@ -16,7 +16,7 @@ class EventService {
      * @param {object} jobQueueConnection - {url: string, user: string, password: string} object that contains required parameters for connecting to Job Queue
      * @param {boolean} perFunctionQueue - create job queue per function, this will increase the amount of redis connections
      */
-    constructor(serviceName, eventConnection, jobQueueConnection,perFunctionQueue){
+    constructor(serviceName, eventConnection, jobQueueConnection,perFunctionQueue, logger){
         this.eventConnection = eventConnection;
         this.jobQueueConnection = jobQueueConnection;
         this.serviceName = serviceName;
@@ -107,7 +107,7 @@ class EventService {
                 .consumer({ groupId: this.serviceName.concat("_", subscription.name)}));
 
         }  catch (error) {
-            console.error(error);
+            logger.error(error);
         }
     }
 
@@ -118,7 +118,6 @@ class EventService {
         queue = new Queue(faasFunction.name, this.queueOptions);
         this.queues.set(faasFunction.name, queue);
         queue.process(subscription.concurrency, subscription.processor);
-        console.log(`Queue opened for function: ${faasFunction.name}`);
         return queue;
     }
 
@@ -129,7 +128,7 @@ class EventService {
             eachMessage: async ({ topic, partition, message }) => {
                 let event = EventService._convertDataToEvent(message);
                 if(event == null) { return }
-                console.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
+                logger.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
                     event.metadata.function = f.name;
                     if (typeof f.annotations.filter === "string") {
@@ -139,12 +138,11 @@ class EventService {
 
                         try {
                             if (safeEval(f.annotations.filter, context) === false) {
-                                console.log(`Pre-filter not true, job not created for function: ${f.name}`);
                                 continue;
                             }
                         }catch(error){
-                            console.error(`Job not created, error in pre-filter for function: ${f.name}`)
-                            console.error(error);
+                            logger.error(`Job not created, error in pre-filter for function: ${f.name}`)
+                            logger.error(error);
                             newrelic.noticeError(error);
                             continue;
                         }
@@ -165,7 +163,7 @@ class EventService {
                     }
 
                     if(!queue){
-                        console.error(`Queue not found: ${queueName}`);
+                        logger.error(`Queue not found: ${queueName}`);
                         newrelic.noticeError(new Error(`Queue not found: ${queueName}`));
                         continue;
                     }
@@ -182,15 +180,13 @@ class EventService {
 
                     //annotations can be string or number
                     if(event.metadata.delay && !isNaN(event.metadata.delay)){
-                        console.info(`Using delay found in metadata for event: ${event.type} on function: ${f.name}`);
                         job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
                     }else if(f.annotations.delay && !isNaN(f.annotations.delay)) {
-                        console.info(`Using delay found in annotation for event: ${event.type} on function: ${f.name}`);
                         job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
                     }
 
                     await job.save();
-                    console.log(`Created job for function: ${f.name}`);
+                    logger.log(`Created job for function: ${f.name}`);
                 }
             }
         });
@@ -217,13 +213,13 @@ class EventService {
         try {
             let message = JSON.parse(ev.value);
             if (!message.type || message.type instanceof String) {
-                console.error("Event does not have a type or type in wrong format");
+                logger.error("Event does not have a type or type in wrong format");
                 return null;
             }
             return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
                 message.content, message.metadata);
         }catch(error){
-            console.error(`Payload not in Json format: ${error}`);
+            logger.error(`Payload not in Json format: ${error}`);
             return null;
         }
     }
