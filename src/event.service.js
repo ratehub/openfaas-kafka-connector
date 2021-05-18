@@ -25,6 +25,7 @@ class EventService {
         this.consumers = new Map();
         this.kafka = new Map();
         this.perFunctionQueue = perFunctionQueue;
+        this.logger = logger;
 
         this.queueOptions= {
             redis: {
@@ -107,7 +108,7 @@ class EventService {
                 .consumer({ groupId: this.serviceName.concat("_", subscription.name)}));
 
         }  catch (error) {
-            logger.error(error);
+            this.logger.error(error);
         }
     }
 
@@ -128,7 +129,7 @@ class EventService {
             eachMessage: async ({ topic, partition, message }) => {
                 let event = EventService._convertDataToEvent(message);
                 if(event == null) { return }
-                logger.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
+                this.logger.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
                     event.metadata.function = f.name;
                     if (typeof f.annotations.filter === "string") {
@@ -141,8 +142,8 @@ class EventService {
                                 continue;
                             }
                         }catch(error){
-                            logger.error(`Job not created, error in pre-filter for function: ${f.name}`)
-                            logger.error(error);
+                            this.logger.error(`Job not created, error in pre-filter for function: ${f.name}`)
+                            this.logger.error(error);
                             newrelic.noticeError(error);
                             continue;
                         }
@@ -163,7 +164,7 @@ class EventService {
                     }
 
                     if(!queue){
-                        logger.error(`Queue not found: ${queueName}`);
+                        this.logger.error(`Queue not found: ${queueName}`);
                         newrelic.noticeError(new Error(`Queue not found: ${queueName}`));
                         continue;
                     }
@@ -186,7 +187,7 @@ class EventService {
                     }
 
                     await job.save();
-                    logger.log(`Created job for function: ${f.name}`);
+                    this.logger.log(`Created job for function: ${f.name}`);
                 }
             }
         });
@@ -213,13 +214,13 @@ class EventService {
         try {
             let message = JSON.parse(ev.value);
             if (!message.type || message.type instanceof String) {
-                logger.error("Event does not have a type or type in wrong format");
+                this.logger.error("Event does not have a type or type in wrong format");
                 return null;
             }
             return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
                 message.content, message.metadata);
         }catch(error){
-            logger.error(`Payload not in Json format: ${error}`);
+            this.logger.error(`Payload not in Json format: ${error}`);
             return null;
         }
     }
