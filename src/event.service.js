@@ -129,7 +129,7 @@ class EventService {
             eachMessage: async ({ topic, partition, message }) => {
                 let event = EventService._convertDataToEvent(message);
                 if(event == null) { return }
-                this.logger.log(`Event: ${event.type} occurred at: ${event.occurredAt}`);
+                this.logger.info(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
                     event.metadata.function = f.name;
                     if (typeof f.annotations.filter === "string") {
@@ -187,7 +187,7 @@ class EventService {
                     }
 
                     await job.save();
-                    this.logger.log(`Created job for function: ${f.name}`);
+                    this.logger.info(`Created job for function: ${f.name}`);
                 }
             }
         });

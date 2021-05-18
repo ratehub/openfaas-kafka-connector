@@ -101,7 +101,7 @@ let includeTopics = [];
                     if(!excludeTopics.includes(topic)) {
                         let subscription = eventService.subscriptions.get(topic);
                         if (!subscription) {
-                            logger.info('Mapped new topic: ${topic}');
+                            logger.info(`Mapped new topic: ${topic}`);
                             await subscribe(eventService, topic, []);
                             await eventService.enableSubscription(eventService.subscriptions.get(topic));
                         }
@@ -161,7 +161,7 @@ async function subscribe(eventService, topic, functions){
                     });
 
                     if (functionResponse.ok) {
-                        logger.log(`Successfully invoked function: ${payload.data.metadata.function}`)
+                        logger.info(`Successfully invoked function: ${payload.data.metadata.function}`)
                     } else {
                         let response = {
                             'function': payload.data.metadata.function,
@@ -173,7 +173,7 @@ async function subscribe(eventService, topic, functions){
                     }
                 }
                 else if (payload.data.metadata.filter) {
-                    logger.log(`Ignored filtered event for function: ${payload.data.metadata.function}`);
+                    logger.info(`Ignored filtered event for function: ${payload.data.metadata.function}`);
                 }
             }catch (error) {
                 logger.error(error);
