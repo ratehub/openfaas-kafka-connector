@@ -108,7 +108,8 @@ class EventService {
                 .consumer({ groupId: this.serviceName.concat("_", subscription.name)}));
 
         }  catch (error) {
-            this.logger.error(error);
+            this.logger.error(error.message);
+            newrelic.noticeError(error);
         }
     }
 
@@ -139,11 +140,12 @@ class EventService {
 
                         try {
                             if (safeEval(f.annotations.filter, context) === false) {
+                                this.logger.info(`Pre-filter not true, job not created for function: ${f.name}`);
                                 continue;
                             }
                         }catch(error){
                             this.logger.error(`Job not created, error in pre-filter for function: ${f.name}`)
-                            this.logger.error(error);
+                            this.logger.error(error.message);
                             newrelic.noticeError(error);
                             continue;
                         }
@@ -220,7 +222,7 @@ class EventService {
             return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
                 message.content, message.metadata);
         }catch(error){
-            this.logger.error(`Payload not in Json format: ${error}`);
+            this.logger.error(`Payload not in Json format: ${error.message}`);
             return null;
         }
     }
