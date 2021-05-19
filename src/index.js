@@ -116,7 +116,7 @@ let includeTopics = [];
     }
     catch(error){
         newrelic.noticeError(error);
-        logger.error(error);
+        logger.error(error.message);
     }
 })();
 
@@ -176,7 +176,7 @@ async function subscribe(eventService, topic, functions){
                     logger.info(`Ignored filtered event for function: ${payload.data.metadata.function}`);
                 }
             }catch (error) {
-                logger.error(error);
+                logger.error(error.message);
                 newrelic.noticeError(error, {function: payload.data.metadata.function, jobId: payload.id});
                 throw error;
             }
