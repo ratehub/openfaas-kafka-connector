@@ -153,11 +153,14 @@ async function subscribe(eventService, topic, functions){
                 //or upgrading from a previous version of connector. Later versions will eval before creating a job,
                 //this will be deprecated in version 2
                 if (!payload.data.metadata.filter || safeEval(payload.data.metadata.filter, context)) {
-                    let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
-                        method: 'post',
-                        body: JSON.stringify(event),
-                        headers: {'Content-Type': 'application/json'},
-                        timeout: requestTimeout
+                    const functionResponse = await newrelic.startBackgroundTransaction(process.env.NEW_RELIC_APP_NAME, async () => {
+                        return await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                            method: 'post',
+                            body: JSON.stringify(event),
+                            headers: {'Content-Type': 'application/json'},
+                            timeout: requestTimeout
+                        });
+
                     });
 
                     if (functionResponse.ok) {
