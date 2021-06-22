@@ -129,7 +129,10 @@ class EventService {
         await this.consumers.get(subscription.stream).run({
             eachMessage: async ({ topic, partition, message }) => {
                 let event = EventService._convertDataToEvent(message);
-                if(event == null) { return }
+                if(event == null) {
+                    this.logger.error(`Payload not in correct format, must contain 'type' and 'content': ${JSON.stringify(JSON.parse(message.value))}`);
+                    return;
+                }
                 this.logger.info(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                 for(let f of subscription.functions){
                     event.metadata.function = f.name;
@@ -215,14 +218,17 @@ class EventService {
     static _convertDataToEvent(ev){
         try {
             let message = JSON.parse(ev.value);
+
             if (!message.type || message.type instanceof String) {
-                this.logger.error("Event does not have a type or type in wrong format");
+                return null;
+            }
+
+            if(!message.content){
                 return null;
             }
             return new Event(ev.offset, message.type, new Date(0).setUTCSeconds(ev.timestamp),
                 message.content, message.metadata);
         }catch(error){
-            this.logger.error(`Payload not in Json format: ${error.message}`);
             return null;
         }
     }
