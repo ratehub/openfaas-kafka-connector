@@ -13,7 +13,7 @@ on:
 
 env:
   PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
-  GITHUB_TOKEN: ${{ secrets.PACTOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GH_RATEHUB_MACHINE_TOKEN }}
 
 
 jobs:

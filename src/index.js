@@ -8,7 +8,7 @@ const cron = require("node-cron");
 let safeEval = require('safe-eval');
 const { format, createLogger, transports } = require('winston');
 const { combine, timestamp, simple, json } = format;
-
+//bump version: 1
 
 const perFunctionQueue = process.env.CREATE_JOB_QUEUE_PER_FUNCTION === "true";
 const kafkaUri = process.env.KAFKA_CONNECTION;
