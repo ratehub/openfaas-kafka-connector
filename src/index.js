@@ -140,45 +140,50 @@ async function getTopics() {
     return _.uniq(normalizedTopics);
 }
 
+async function triggerFunctionFromEvent(payload) {
+
+    return newrelic.startBackgroundTransaction(`trigger-${payload.data.metadata.function}`, async () => {
+        let event = payload.data;
+        let context = {
+            event
+        };
+
+        try {
+            //If filter has been specified, and it evaluates to true, or hasn't been specified
+            //[Tech debt]: this is redundant, but good for any delayed jobs that maybe created before version 1.3.9,
+            //or upgrading from a previous version of connector. Later versions will eval before creating a job,
+            //this will be deprecated in version 2
+            if (!payload.data.metadata.filter || safeEval(payload.data.metadata.filter, context)) {
+                const functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
+                    method: 'post',
+                    body: JSON.stringify(event),
+                    headers: {'Content-Type': 'application/json'},
+                    timeout: requestTimeout
+                });
+
+                if (functionResponse.ok) {
+                    logger.info(`Successfully invoked function: ${payload.data.metadata.function}`)
+                } else {
+                    let response = {
+                        'function': payload.data.metadata.function,
+                        'status': functionResponse.status,
+                        'statusText': functionResponse.statusText,
+                        'body': await functionResponse.text()
+                    }
+                    throw Error(JSON.stringify(response));
+                }
+            } else if (payload.data.metadata.filter) {
+                logger.info(`Ignored filtered event for function: ${payload.data.metadata.function}`);
+            }
+        } catch (error) {
+            logger.error(error.message);
+            newrelic.noticeError(error, {function: payload.data.metadata.function, jobId: payload.id});
+            throw error;
+        }
+    });
+}
+
 async function subscribe(eventService, topic, functions){
     await eventService.subscribe(topic,
-        `${topic}`, functions, concurrency, async (payload, done) => {
-            let event = payload.data;
-            let context = {
-                event
-            };
-            try {
-                //If filter has been specified, and it evaluates to true, or hasn't been specified
-                //[Tech debt]: this is redundant, but good for any delayed jobs that maybe created before version 1.3.9,
-                //or upgrading from a previous version of connector. Later versions will eval before creating a job,
-                //this will be deprecated in version 2
-                if (!payload.data.metadata.filter || safeEval(payload.data.metadata.filter, context)) {
-                    let functionResponse = await fetch(`${faas}/function/${payload.data.metadata.function}`, {
-                        method: 'post',
-                        body: JSON.stringify(event),
-                        headers: {'Content-Type': 'application/json'},
-                        timeout: requestTimeout
-                    });
-
-                    if (functionResponse.ok) {
-                        logger.info(`Successfully invoked function: ${payload.data.metadata.function}`)
-                    } else {
-                        let response = {
-                            'function': payload.data.metadata.function,
-                            'status': functionResponse.status,
-                            'statusText': functionResponse.statusText,
-                            'body': await functionResponse.text()
-                        }
-                        throw Error(JSON.stringify(response));
-                    }
-                }
-                else if (payload.data.metadata.filter) {
-                    logger.info(`Ignored filtered event for function: ${payload.data.metadata.function}`);
-                }
-            }catch (error) {
-                logger.error(error.message);
-                newrelic.noticeError(error, {function: payload.data.metadata.function, jobId: payload.id});
-                throw error;
-            }
-    });
+        `${topic}`, functions, concurrency, triggerFunctionFromEvent);
 }
