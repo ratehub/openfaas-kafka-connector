@@ -135,7 +135,10 @@ class EventService {
                         newrelic.noticeError(new Error(`Payload not in correct format, must contain 'type' and 'content': ${JSON.stringify(JSON.parse(message.value))}`));
                         return;
                     }
+
                     this.logger.info(`Event: ${event.type} occurred at: ${event.occurredAt}`);
+                    newrelic.addCustomAttribute('eventType', event.type);
+
                     for (let f of subscription.functions) {
                         event.metadata.function = f.name;
                         if (typeof f.annotations.filter === "string") {
