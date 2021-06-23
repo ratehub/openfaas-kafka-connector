@@ -129,17 +129,15 @@ class EventService {
         await this.consumers.get(subscription.stream).run({
             eachMessage: async ({ topic, partition, message }) => {
                 await newrelic.startWebTransaction(topic, async () => {
-
                     let event = EventService._convertDataToEvent(message);
                     if (event == null) {
                         this.logger.error(`Payload not in correct format, must contain 'type' and 'content': ${JSON.stringify(JSON.parse(message.value))}`);
+                        newrelic.noticeError(new Error(`Payload not in correct format, must contain 'type' and 'content': ${JSON.stringify(JSON.parse(message.value))}`));
                         return;
                     }
-
                     this.logger.info(`Event: ${event.type} occurred at: ${event.occurredAt}`);
                     for (let f of subscription.functions) {
                         event.metadata.function = f.name;
-                        newrelic.addCustomAttribute('function', f.name);
                         if (typeof f.annotations.filter === "string") {
                             let context = {
                                 event
@@ -153,12 +151,12 @@ class EventService {
                             } catch (error) {
                                 this.logger.error(`Job not created, error in pre-filter for function: ${f.name}`)
                                 this.logger.error(error.message);
-                                newrelic.noticeError(error);
+                                newrelic.noticeError(error, { eventType: event.type, function: f.name,
+                                    filter: f.annotations.filter});
                                 continue;
                             }
 
                             event.metadata.filter = f.annotations.filter;
-                            newrelic.addCustomAttribute('filter', f.annotations.filter);
                         }
 
                         let queue = null;
@@ -174,7 +172,8 @@ class EventService {
 
                         if (!queue) {
                             this.logger.error(`Queue not found: ${queueName}`);
-                            newrelic.noticeError(new Error(`Queue not found: ${queueName}`));
+                            newrelic.noticeError(new Error(`Queue not found: ${queueName}`),
+                                { eventType: event.type, function: f.name});
                             continue;
                         }
 
@@ -184,11 +183,8 @@ class EventService {
                             if (!f.annotations.retryLatency) {
                                 f.annotations.retryLatency = 1000;
                             }
-                            newrelic.addCustomAttribute('strategy', f.annotations.strategy);
-                            newrelic.addCustomAttribute('retryLatency', f.annotations.retryLatency);
                             job.backoff(f.annotations.strategy, Number(f.annotations.retryLatency));
                             if (f.annotations.retries) {
-                                newrelic.addCustomAttribute('retries', f.annotations.retries);
                                 job.retries(f.annotations.retries);
                             }
                         }
@@ -196,9 +192,7 @@ class EventService {
                         //annotations can be string or number
                         if (event.metadata.delay && !isNaN(event.metadata.delay)) {
                             job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
-                            newrelic.addCustomAttribute('delay', event.metadata.delay);
                         } else if (f.annotations.delay && !isNaN(f.annotations.delay)) {
-                            newrelic.addCustomAttribute('delay', f.annotations.delay);
                             job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
                         }
 
