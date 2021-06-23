@@ -128,72 +128,81 @@ class EventService {
         await this.consumers.get(subscription.stream).subscribe({topic: subscription.stream});
         await this.consumers.get(subscription.stream).run({
             eachMessage: async ({ topic, partition, message }) => {
-                let event = EventService._convertDataToEvent(message);
-                if(event == null) {
-                    this.logger.error(`Payload not in correct format, must contain 'type' and 'content': ${JSON.stringify(JSON.parse(message.value))}`);
-                    return;
-                }
-                this.logger.info(`Event: ${event.type} occurred at: ${event.occurredAt}`);
-                for(let f of subscription.functions){
-                    event.metadata.function = f.name;
-                    if (typeof f.annotations.filter === "string") {
-                        let context = {
-                            event
-                        };
+                await newrelic.startWebTransaction(topic, async () => {
+                    let event = EventService._convertDataToEvent(message);
+                    if (event == null) {
+                        this.logger.error(`Payload not in correct format, must contain 'type' and 'content': ${JSON.stringify(JSON.parse(message.value))}`);
+                        newrelic.noticeError(new Error(`Payload not in correct format, must contain 'type' and 'content': ${JSON.stringify(JSON.parse(message.value))}`));
+                        return;
+                    }
 
-                        try {
-                            if (safeEval(f.annotations.filter, context) === false) {
-                                this.logger.info(`Pre-filter not true, job not created for function: ${f.name}`);
+                    this.logger.info(`Event: ${event.type} occurred at: ${event.occurredAt}`);
+                    newrelic.addCustomAttribute('eventType', event.type);
+
+                    for (let f of subscription.functions) {
+                        event.metadata.function = f.name;
+                        if (typeof f.annotations.filter === "string") {
+                            let context = {
+                                event
+                            };
+
+                            try {
+                                if (safeEval(f.annotations.filter, context) === false) {
+                                    this.logger.info(`Pre-filter not true, job not created for function: ${f.name}`);
+                                    continue;
+                                }
+                            } catch (error) {
+                                this.logger.error(`Job not created, error in pre-filter for function: ${f.name}`)
+                                this.logger.error(error.message);
+                                newrelic.noticeError(error, { eventType: event.type, function: f.name,
+                                    filter: f.annotations.filter});
                                 continue;
                             }
-                        }catch(error){
-                            this.logger.error(`Job not created, error in pre-filter for function: ${f.name}`)
-                            this.logger.error(error.message);
-                            newrelic.noticeError(error);
+
+                            event.metadata.filter = f.annotations.filter;
+                        }
+
+                        let queue = null;
+                        let queueName = null;
+
+                        if (this.perFunctionQueue) {
+                            queue = this._createOrGetFunctionQueue(f, subscription);
+                            queueName = f.name;
+                        } else {
+                            queue = this.queues.get(subscription.name);
+                            queueName = subscription.name;
+                        }
+
+                        if (!queue) {
+                            this.logger.error(`Queue not found: ${queueName}`);
+                            newrelic.noticeError(new Error(`Queue not found: ${queueName}`),
+                                { eventType: event.type, function: f.name});
                             continue;
                         }
 
-                        event.metadata.filter = f.annotations.filter;
-                    }
+                        let job = queue.createJob(event);
 
-                    let queue = null;
-                    let queueName = null;
-
-                    if(this.perFunctionQueue){
-                        queue = this._createOrGetFunctionQueue(f,subscription);
-                        queueName = f.name;
-                    }
-                    else{
-                        queue = this.queues.get(subscription.name);
-                        queueName = subscription.name;
-                    }
-
-                    if(!queue){
-                        this.logger.error(`Queue not found: ${queueName}`);
-                        newrelic.noticeError(new Error(`Queue not found: ${queueName}`));
-                        continue;
-                    }
-
-                    let job = queue.createJob(event);
-
-                    if (f.annotations.strategy === 'fixed' || f.annotations.strategy === 'exponential') {
-                        if(!f.annotations.retryLatency){f.annotations.retryLatency = 1000 ;}
-                        job.backoff(f.annotations.strategy, Number(f.annotations.retryLatency));
-                        if(f.annotations.retries) {
-                            job.retries(f.annotations.retries);
+                        if (f.annotations.strategy === 'fixed' || f.annotations.strategy === 'exponential') {
+                            if (!f.annotations.retryLatency) {
+                                f.annotations.retryLatency = 1000;
+                            }
+                            job.backoff(f.annotations.strategy, Number(f.annotations.retryLatency));
+                            if (f.annotations.retries) {
+                                job.retries(f.annotations.retries);
+                            }
                         }
-                    }
 
-                    //annotations can be string or number
-                    if(event.metadata.delay && !isNaN(event.metadata.delay)){
-                        job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
-                    }else if(f.annotations.delay && !isNaN(f.annotations.delay)) {
-                        job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
-                    }
+                        //annotations can be string or number
+                        if (event.metadata.delay && !isNaN(event.metadata.delay)) {
+                            job.delayUntil(new Date(Date.now() + Number(event.metadata.delay)));
+                        } else if (f.annotations.delay && !isNaN(f.annotations.delay)) {
+                            job.delayUntil(new Date(Date.now() + Number(f.annotations.delay)));
+                        }
 
-                    await job.save();
-                    this.logger.info(`Created job for function: ${f.name}`);
-                }
+                        await job.save();
+                        this.logger.info(`Created job for function: ${f.name}`);
+                    }
+                });
             }
         });
     }
